@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2 } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Loader2, AlertCircle, CheckCircle, Home, Wrench } from 'lucide-react';
 
 // Define types for our data
 interface CompressorResults {
@@ -62,6 +63,12 @@ export default function CompressorAnalysisPage() {
         // Load Plotly
         if (!window.Plotly) {
           await new Promise<void>((resolve, reject) => {
+            // Check if script is already loading
+            if (document.querySelector('script[src*="plotly"]')) {
+              resolve();
+              return;
+            }
+            
             const script = document.createElement('script');
             script.src = 'https://cdn.plot.ly/plotly-3.0.1.min.js';
             script.onload = () => resolve();
@@ -70,28 +77,35 @@ export default function CompressorAnalysisPage() {
           });
         }
 
-        // Configure Module for CoolProp
-        window.Module = {
-          locateFile: function(path: string) {
-            if (path.endsWith('.wasm')) {
-              return '/coolprop.wasm';
+        // Configure Module for CoolProp only if not already configured
+        if (!window.Module) {
+          window.Module = {
+            locateFile: function(path: string) {
+              if (path.endsWith('.wasm')) {
+                return '/coolprop.wasm';
+              }
+              return path;
+            },
+            onRuntimeInitialized: function() {
+              console.log('CoolProp WASM module initialized');
+              setCoolPropReady(true);
+            },
+            print: function(text: string) {
+              console.log('CoolProp stdout:', text);
+            },
+            printErr: function(text: string) {
+              console.error('CoolProp stderr:', text);
             }
-            return path;
-          },
-          onRuntimeInitialized: function() {
-            console.log('CoolProp WASM module initialized');
-            setCoolPropReady(true);
-          },
-          print: function(text: string) {
-            console.log('CoolProp stdout:', text);
-          },
-          printErr: function(text: string) {
-            console.error('CoolProp stderr:', text);
-          }
-        };
+          };
+        }
 
-        // Load CoolProp
+        // Load CoolProp only if not already loaded
         if (!window.Module.PropsSI) {
+          // Check if CoolProp script is already loading
+          if (document.querySelector('script[src*="coolprop"]')) {
+            return;
+          }
+          
           await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.src = '/coolprop.js';
@@ -110,6 +124,8 @@ export default function CompressorAnalysisPage() {
             script.onerror = reject;
             document.head.appendChild(script);
           });
+        } else {
+          setCoolPropReady(true);
         }
       } catch (err) {
         console.error('Error loading scripts:', err);
@@ -118,6 +134,13 @@ export default function CompressorAnalysisPage() {
     };
 
     loadScripts();
+
+    // Cleanup function
+    return () => {
+      // Don't remove scripts on unmount as they might be needed by other components
+      // Just reset the ready state
+      setCoolPropReady(false);
+    };
   }, []);
 
   // Handle form input changes
@@ -226,7 +249,7 @@ export default function CompressorAnalysisPage() {
       setResults(results);
       
       // Create the plot
-      setTimeout(() => createPlot(results), 100);
+      setTimeout(() => createPlot(results), 200);
 
     } catch (err) {
       console.error('Calculation error:', err);
@@ -334,6 +357,29 @@ export default function CompressorAnalysisPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Home
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/tools" className="flex items-center gap-2">
+              <Wrench className="h-4 w-4" />
+              Engineering Tools
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Compressor Analysis</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <Card>
         <CardHeader>
@@ -356,21 +402,31 @@ export default function CompressorAnalysisPage() {
         </Alert>
       )}
 
+      {coolPropReady && !results && (
+        <Alert>
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription>
+            System ready! Configure your compressor parameters and run the analysis.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {error && (
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Input Panel */}
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Input Parameters</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="space-y-4">
+              <div className="space-y-2">
                 <Label htmlFor="suctionPressure">Suction Pressure (bar)</Label>
                 <Input
                   id="suctionPressure"
@@ -381,7 +437,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="dischargePressure">Discharge Pressure (bar)</Label>
                 <Input
                   id="dischargePressure"
@@ -392,7 +448,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="flowRate">Flow Rate (CFM)</Label>
                 <Input
                   id="flowRate"
@@ -403,7 +459,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="efficiency">Compressor Efficiency (0-1)</Label>
                 <Input
                   id="efficiency"
@@ -416,7 +472,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="tempMin">Min Temperature (°C)</Label>
                 <Input
                   id="tempMin"
@@ -427,7 +483,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="tempMax">Max Temperature (°C)</Label>
                 <Input
                   id="tempMax"
@@ -438,7 +494,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="tempRef">Reference Temperature (°C)</Label>
                 <Input
                   id="tempRef"
@@ -449,7 +505,7 @@ export default function CompressorAnalysisPage() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="fluid">Working Fluid</Label>
                 <Select value={formData.fluid} onValueChange={(value) => handleInputChange('fluid', value)}>
                   <SelectTrigger>
@@ -483,17 +539,17 @@ export default function CompressorAnalysisPage() {
         </Card>
 
         {/* Results Panel */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Results</CardTitle>
           </CardHeader>
           <CardContent>
             {/* Plot */}
-            <div ref={plotRef} style={{ width: '100%', height: '400px' }} />
+            <div ref={plotRef} className="w-full h-[600px] mb-6" />
 
             {/* Summary */}
             {results && (
-              <div className="mt-6 space-y-4">
+              <div className="space-y-4">
                 <h3 className="font-semibold">Power Savings Summary</h3>
                 
                 <Table>
@@ -515,10 +571,10 @@ export default function CompressorAnalysisPage() {
                   </TableBody>
                 </Table>
 
-                <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="p-4 bg-muted rounded-lg">
                   <h4 className="font-semibold mb-2">Optimal Operating Point</h4>
-                  <p>Lowest power consumption at {results.optimalTemp.toFixed(1)}°C: {results.optimalPower.toFixed(2)} kW</p>
-                  <p>Maximum savings: {results.maxSavings.toFixed(2)}%</p>
+                  <p className="text-sm">Lowest power consumption at {results.optimalTemp.toFixed(1)}°C: {results.optimalPower.toFixed(2)} kW</p>
+                  <p className="text-sm">Maximum savings: {results.maxSavings.toFixed(2)}%</p>
                 </div>
               </div>
             )}
