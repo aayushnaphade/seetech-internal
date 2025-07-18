@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoolProp Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+    <script>
+        var Module = {
+            locateFile: function(path) {
+                if(path.endsWith('.wasm')) {
+                    return path;
+                }
+                return path;
+            },
+            onRuntimeInitialized: function() {
+                document.getElementById('status').innerHTML = 'WASM module initialized';
+                testCoolProp();
+            }
+        };
+    </script>
+    <script src="coolprop.js"></script>
+</head>
+<body>
+    <h1>CoolProp Test</h1>
+    <div id="status">Loading...</div>
+    <div id="result" class="result"></div>
+
+    <script>
+        function testCoolProp() {
+            try {
+                if (typeof CoolProp === 'undefined') {
+                    document.getElementById('result').innerHTML = '<div class="error">Error: CoolProp is undefined</div>';
+                    return;
+                }
+                
+                if (typeof CoolProp.PropsSI !== 'function') {
+                    document.getElementById('result').innerHTML = '<div class="error">Error: CoolProp.PropsSI is not a function</div>';
+                    console.log('CoolProp object:', CoolProp);
+                    return;
+                }
+                
+                // Test a simple calculation
+                var temperature = 300; // K
+                var pressure = 101325; // Pa
+                var density = CoolProp.PropsSI('D', 'T', temperature, 'P', pressure, 'Air');
+                var specificHeat = CoolProp.PropsSI('C', 'T', temperature, 'P', pressure, 'Air');
+                
+                document.getElementById('result').innerHTML = 
+                    '<div class="success">CoolProp is working correctly!</div>' +
+                    '<p>Air at ' + (temperature-273.15).toFixed(1) + '°C and ' + (pressure/1000).toFixed(1) + ' kPa:</p>' +
+                    '<p>Density: ' + density.toFixed(3) + ' kg/m³</p>' +
+                    '<p>Specific Heat: ' + specificHeat.toFixed(1) + ' J/kg-K</p>';
+                
+                document.getElementById('status').innerHTML += ' - Tests passed!';
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<div class="error">Error during calculation: ' + error.message + '</div>' +
+                    '<pre>' + error.stack + '</pre>';
+                console.error(error);
+            }
+        }
+        
+        // If Module.onRuntimeInitialized didn't run after 3 seconds, try anyway
+        setTimeout(function() {
+            if (document.getElementById('status').innerHTML === 'Loading...') {
+                document.getElementById('status').innerHTML = 'Timeout - trying anyway';
+                testCoolProp();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
