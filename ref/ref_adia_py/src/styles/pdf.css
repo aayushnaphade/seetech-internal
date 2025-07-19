@@ -1,0 +1,53 @@
+/* PDF-specific styles */
+
+/* A4 page container */
+.a4-page-container {
+  width: 210mm;
+  height: 297mm;
+  margin: 0 auto;
+  padding: 15mm 10mm;
+  page-break-after: always;
+  position: relative;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 0 0.5cm rgba(0,0,0,0.1);
+}
+
+/* Page break control */
+.avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Print controls - only visible on screen */
+.print-controls {
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Print media query */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .pdf-preview {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .a4-page-container {
+    box-shadow: none;
+    margin: 0;
+    padding: 15mm 10mm;
+  }
+  
+  .print-controls {
+    display: none;
+  }
+}

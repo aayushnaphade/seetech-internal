@@ -1,7 +1,25 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from 'react';
-import { ChillerProposalTemplate, ChillerProposalData } from '@/components/templates/chiller-proposal-template';
+import ChillerProposalTemplate from '@/components/templates/chiller-proposal-template-redesigned';
+
+interface ProposalData {
+  clientName: string;
+  clientLocation: string;
+  currentPower: string;
+  optimizedPower: string;
+  expectedSaving: string;
+  monthlyBill: string;
+  projectedBill: string;
+  annualSavings: string;
+  roiMonths: string;
+  currentTemp: string;
+  optimizedTemp: string;
+  tempReduction: string;
+  currentCOP: string;
+  optimizedCOP: string;
+  copImprovement: string;
+}
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,7 +44,7 @@ import {
 import Link from "next/link";
 import { useReactToPrint } from 'react-to-print';
 import { jsPDF } from 'jspdf';
-// import html2canvas from 'html2canvas'; // removed due to unsupported lab() color functions
+import html2canvas from 'html2canvas';
 import { 
   Breadcrumb, 
   BreadcrumbItem, 
@@ -40,14 +58,23 @@ export default function ProposalGeneratorPage() {
   const [activeTab, setActiveTab] = useState("inputs");
   const proposalRef = useRef<HTMLDivElement>(null);
   
-  const [formData, setFormData] = useState<ChillerProposalData>({
+  const [formData, setFormData] = useState<ProposalData>({
     clientName: "Ashirwad Pipes",
     clientLocation: "Plot 26, Attibele Industrial Area",
-    projectDate: "July 18, 2025",
-    chillerCapacity: "255",
-    chillerType: "Air-Cooled",
     currentPower: "210.0",
+    optimizedPower: "168.0",
     expectedSaving: "20",
+    monthlyBill: "1,68,000",
+    projectedBill: "1,34,400",
+    annualSavings: "4,03,200",
+    roiMonths: "18",
+    currentTemp: "47.7",
+    optimizedTemp: "36.0",
+    tempReduction: "11.7",
+    currentCOP: "2.60",
+    optimizedCOP: "4.30",
+    copImprovement: "1.70"
+  });
     electricityRate: "6.5",
     waterCost: "45",
     projectCost: "20,30,000",
@@ -124,11 +151,54 @@ export default function ProposalGeneratorPage() {
   };
 
   // Function to generate PDF using jsPDF
-  // PDF generation via html2canvas is disabled due to unsupported CSS functions
-  const generatePDF = useCallback(() => {
-    // Fallback to browser print
-    handlePrint?.();
-  }, [handlePrint]);
+  const generatePDF = useCallback(async () => {
+    if (proposalRef.current) {
+      const proposalElement = proposalRef.current;
+      
+      try {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        
+        // Create canvas from HTML element
+        const canvas = await html2canvas(proposalElement, {
+          scale: 1.5,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          removeContainer: true,
+          foreignObjectRendering: false,
+          windowWidth: proposalElement.scrollWidth,
+          windowHeight: proposalElement.scrollHeight
+        });
+        
+        const imgWidth = pdfWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const imgData = canvas.toDataURL('image/png', 0.8);
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - (margin * 2));
+        position = heightLeft - imgHeight;
+        
+        while (heightLeft > 0) {
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+          heightLeft -= (pdfHeight - (margin * 2));
+          position -= (pdfHeight - (margin * 2));
+        }
+        
+        pdf.save(`${formData.clientName}_Adiabatic_Cooling_Proposal.pdf`);
+      } catch (error) {
+        console.error("Error generating PDF:", error);
+        alert("PDF generation failed. Please try using the Print button instead.");
+      }
+    }
+  }, [formData.clientName]);
 
   return (
     <div className="min-h-screen bg-background">
