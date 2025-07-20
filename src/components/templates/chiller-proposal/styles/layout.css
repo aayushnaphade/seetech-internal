@@ -1,0 +1,171 @@
+/* 🏗️ Layout Components - Report-Style Structure */
+
+@import './design-tokens.css';
+
+/* 📄 Report Container */
+.chiller-report-container {
+  max-width: 210mm; /* A4 width */
+  margin: 0 auto;
+  padding: var(--chiller-space-lg);
+  background: white;
+  box-shadow: var(--chiller-shadow-lg);
+  font-family: var(--chiller-font-body);
+}
+
+/* 📋 Section Headers */
+.chiller-section-header {
+  font-family: var(--chiller-font-heading);
+  font-size: var(--chiller-fs-h2);
+  font-weight: 600;
+  color: var(--chiller-primary);
+  margin: var(--chiller-space-xl) 0 var(--chiller-space-md) 0;
+  padding-bottom: var(--chiller-space-sm);
+  border-bottom: 2px solid var(--chiller-accent);
+  position: relative;
+}
+
+.chiller-section-header::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--chiller-gradient-accent);
+}
+
+/* 🎯 Metric Cards - Compact Report Style */
+.chiller-metric-card {
+  display: inline-block;
+  background: var(--chiller-neutral);
+  border: 1px solid var(--chiller-border);
+  border-radius: var(--chiller-radius-md);
+  padding: var(--chiller-space-md);
+  margin: var(--chiller-space-sm);
+  text-align: center;
+  min-width: 140px;
+  box-shadow: var(--chiller-shadow-sm);
+}
+
+.chiller-metric-value {
+  font-family: var(--chiller-font-heading);
+  font-size: var(--chiller-fs-subtitle);
+  font-weight: 700;
+  color: var(--chiller-primary);
+  margin-bottom: var(--chiller-space-xs);
+}
+
+.chiller-metric-label {
+  font-size: var(--chiller-fs-small);
+  color: var(--chiller-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* ✅ Positive Metrics */
+.chiller-metric-card.positive .chiller-metric-value {
+  color: var(--chiller-success);
+}
+
+/* ⚠️ Warning Metrics */
+.chiller-metric-card.warning .chiller-metric-value {
+  color: var(--chiller-warning);
+}
+
+/* 🎨 Icon Containers */
+.chiller-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: var(--chiller-space-sm);
+}
+
+.chiller-icon-container.primary {
+  background: var(--chiller-gradient-header);
+  color: white;
+}
+
+.chiller-icon-container.success {
+  background: var(--chiller-gradient-success);
+  color: white;
+}
+
+.chiller-icon-container.accent {
+  background: var(--chiller-gradient-accent);
+  color: white;
+}
+
+/* 📊 Two-Column Layout */
+.chiller-two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--chiller-space-lg);
+  margin: var(--chiller-space-md) 0;
+}
+
+/* 📈 Three-Column Layout */
+.chiller-three-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--chiller-space-md);
+  margin: var(--chiller-space-md) 0;
+}
+
+/* 🎯 Highlight Box */
+.chiller-highlight-box {
+  background: var(--chiller-highlight);
+  border: 1px solid var(--chiller-warning);
+  border-radius: var(--chiller-radius-md);
+  padding: var(--chiller-space-md);
+  margin: var(--chiller-space-md) 0;
+}
+
+.chiller-highlight-box h4 {
+  color: var(--chiller-primary);
+  margin: 0 0 var(--chiller-space-sm) 0;
+  font-weight: 600;
+}
+
+/* 📋 Professional List */
+.chiller-pro-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--chiller-space-md) 0;
+}
+
+.chiller-pro-list li {
+  padding: var(--chiller-space-sm) 0;
+  border-bottom: 1px solid var(--chiller-border);
+  display: flex;
+  align-items: center;
+}
+
+.chiller-pro-list li:last-child {
+  border-bottom: none;
+}
+
+.chiller-pro-list li::before {
+  content: '✓';
+  color: var(--chiller-success);
+  font-weight: bold;
+  margin-right: var(--chiller-space-sm);
+  font-size: var(--chiller-fs-h4);
+}
+
+/* 🎨 Responsive Design */
+@media (max-width: 768px) {
+  .chiller-two-column,
+  .chiller-three-column {
+    grid-template-columns: 1fr;
+  }
+  
+  .chiller-metric-card {
+    min-width: auto;
+    width: 100%;
+    margin: var(--chiller-space-xs) 0;
+  }
+}

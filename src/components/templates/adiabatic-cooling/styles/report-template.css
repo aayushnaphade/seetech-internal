@@ -1,0 +1,335 @@
+/**
+ * 📋 Professional Report Template Styles
+ * Designed for PDF generation and professional printing
+ * Clean, document-style layout without web UI elements
+ */
+
+.report-template {
+  font-family: "Times New Roman", serif;
+  color: #000;
+  background: white;
+  max-width: 210mm; /* A4 width */
+  margin: 0 auto;
+  padding: 20mm;
+  line-height: 1.4;
+  font-size: 11pt;
+}
+
+/* Header Styles */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #000;
+  padding-bottom: 10pt;
+  margin-bottom: 20pt;
+}
+
+.company-logo h1 {
+  font-size: 16pt;
+  font-weight: bold;
+  margin: 0;
+  color: #1a365d;
+}
+
+.company-logo p {
+  font-size: 10pt;
+  margin: 2pt 0 0 0;
+  color: #4a5568;
+}
+
+.proposal-meta {
+  text-align: right;
+}
+
+.proposal-meta h2 {
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0;
+  color: #1a365d;
+}
+
+.proposal-meta p {
+  font-size: 10pt;
+  margin: 2pt 0;
+  color: #4a5568;
+}
+
+/* Title Section */
+.title-section {
+  text-align: center;
+  margin: 40pt 0;
+  page-break-after: always;
+}
+
+.proposal-title {
+  font-size: 20pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+  color: #1a365d;
+}
+
+.subtitle {
+  font-size: 16pt;
+  margin: 0 0 40pt 0;
+  color: #4a5568;
+}
+
+.client-info, .engineer-info {
+  text-align: left;
+  margin: 30pt 0;
+  border: 1px solid #ccc;
+  padding: 15pt;
+}
+
+.client-info h3, .engineer-info h3 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+  color: #1a365d;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 5pt;
+}
+
+.client-name {
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 5pt 0;
+}
+
+.client-location, .contact {
+  font-size: 11pt;
+  margin: 3pt 0;
+  color: #4a5568;
+}
+
+/* Section Headers */
+.section-title {
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 25pt 0 15pt 0;
+  color: #1a365d;
+  border-bottom: 1px solid #1a365d;
+  padding-bottom: 5pt;
+  text-transform: uppercase;
+}
+
+/* Executive Summary */
+.summary-text {
+  margin: 15pt 0;
+  text-align: justify;
+}
+
+.key-highlights {
+  margin: 20pt 0;
+  border: 1px solid #e2e8f0;
+  padding: 15pt;
+  background: #f8fafc;
+}
+
+.key-highlights h3 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+  color: #1a365d;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 10pt 0;
+}
+
+.benefits-list li {
+  margin: 5pt 0;
+  padding-left: 15pt;
+  position: relative;
+}
+
+.benefits-list li:before {
+  content: "•";
+  color: #1a365d;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+/* Tables */
+.comparison-table, .financial-table, .projection-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15pt 0;
+  font-size: 10pt;
+}
+
+.comparison-table th, .financial-table th, .projection-table th {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e0;
+  padding: 8pt;
+  text-align: center;
+  font-weight: bold;
+  color: #1a365d;
+}
+
+.comparison-table td, .financial-table td, .projection-table td {
+  border: 1px solid #cbd5e0;
+  padding: 8pt;
+  text-align: center;
+}
+
+.comparison-table td:first-child, .financial-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.amount {
+  font-weight: bold;
+  text-align: right !important;
+}
+
+.positive {
+  color: #22543d;
+}
+
+.negative {
+  color: #c53030;
+}
+
+/* Operating Conditions */
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10pt;
+  margin: 15pt 0;
+}
+
+.condition-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8pt;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.label {
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.value {
+  font-weight: bold;
+  color: #1a365d;
+}
+
+/* Environmental Impact */
+.environmental-benefits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20pt;
+  margin: 15pt 0;
+}
+
+.benefit-item {
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  padding: 15pt;
+}
+
+.benefit-item h4 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+  color: #1a365d;
+}
+
+.benefit-value {
+  font-size: 16pt;
+  font-weight: bold;
+  margin: 5pt 0;
+  color: #22543d;
+}
+
+.benefit-desc {
+  font-size: 9pt;
+  color: #4a5568;
+  margin: 5pt 0 0 0;
+}
+
+/* Implementation Plan */
+.project-phases {
+  margin: 15pt 0;
+}
+
+.phase {
+  margin: 15pt 0;
+  border-left: 3px solid #1a365d;
+  padding-left: 15pt;
+}
+
+.phase h4 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 8pt 0;
+  color: #1a365d;
+}
+
+.phase ul {
+  margin: 8pt 0;
+  padding-left: 15pt;
+}
+
+.phase li {
+  margin: 3pt 0;
+  color: #4a5568;
+}
+
+/* Page Breaks */
+.page-break {
+  page-break-before: always;
+}
+
+/* Footer */
+.report-footer {
+  position: fixed;
+  bottom: 15mm;
+  left: 20mm;
+  right: 20mm;
+  text-align: center;
+  font-size: 9pt;
+  color: #4a5568;
+}
+
+.footer-line {
+  border-top: 1px solid #cbd5e0;
+  margin-bottom: 5pt;
+}
+
+/* Print Specific Styles */
+@media print {
+  .report-template {
+    padding: 0;
+    max-width: none;
+  }
+  
+  .page-break {
+    page-break-before: always;
+  }
+  
+  .no-print {
+    display: none;
+  }
+  
+  * {
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+}
+
+/* Ensure proper page layout for A4 */
+@page {
+  size: A4;
+  margin: 20mm;
+}
+
+@page :first {
+  margin-top: 40mm;
+}

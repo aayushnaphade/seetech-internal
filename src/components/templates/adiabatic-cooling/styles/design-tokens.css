@@ -1,0 +1,141 @@
+/* 🎨 Adiabatic Cooling Design Language - Professional B2B Engineering Proposals */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
+
+:root {
+  /* 🎯 Primary Color Palette - Professional Authority */
+  --color-primary: #0A435C;           /* Deep blue - headings, authority, trust */
+  --color-secondary: #1D7AA3;         /* Medium blue - highlights, secondary elements */
+  --color-accent: #2E936E;            /* Rich teal-green - positive values, clean energy */
+  --color-warning: #B23A48;           /* Refined burgundy-red - warnings, negatives */
+  
+  /* 🌈 Supporting Colors */
+  --color-neutral: #F8FAFC;           /* Very light blue-gray - backgrounds */
+  --color-text: #2D3B45;              /* Deep slate - main text (easier than black) */
+  --color-light-accent: #7CDBD5;      /* Vibrant teal - highlights, graphical elements */
+  --color-border: #D9E2EC;            /* Subtle border color */
+  --color-highlight: #F68D60;         /* Warm orange - sophisticated highlights */
+  --color-muted-text: #64748B;        /* Secondary/less important text */
+  
+  /* 📊 Table Colors */
+  --color-table-header: var(--color-primary);
+  --color-table-odd: var(--color-neutral);
+  --color-table-even: #EDF2F7;
+  
+  /* 🎨 Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  --gradient-accent: linear-gradient(135deg, var(--color-accent), var(--color-light-accent));
+  --gradient-header: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  
+  /* 📝 Typography System */
+  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Montserrat', sans-serif;
+  
+  /* Font Sizes */
+  --font-size-main-title: 34px;
+  --font-size-subtitle: 24px;
+  --font-size-h2: 22px;
+  --font-size-h3: 18px;
+  --font-size-h4: 16px;
+  --font-size-body: 15px;
+  --font-size-body-large: 16px;
+  --font-size-small: 13px;
+  --font-size-micro: 12px;
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* 📐 Spacing Scale - 8px Base Grid */
+  --spacing-micro: 4px;
+  --spacing-small: 8px;
+  --spacing-medium: 16px;
+  --spacing-large: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 🏗️ Layout System */
+  --a4-width: 210mm;
+  --a4-height: 297mm;
+  --a4-margin: 15mm;
+  --a4-padding: 12mm;
+  --component-width: 48%;
+  
+  /* 🎭 Shadows */
+  --shadow-light: 0 2px 4px rgba(10, 67, 92, 0.1);
+  --shadow-medium: 0 5px 15px rgba(10, 67, 92, 0.08);
+  --shadow-strong: 0 8px 20px rgba(10, 67, 92, 0.15);
+  --shadow-card: 0 5px 15px rgba(10, 67, 92, 0.08);
+  --shadow-card-hover: 0 8px 20px rgba(10, 67, 92, 0.15);
+  
+  /* Print/PDF fallbacks */
+  --border-card: 1px solid rgba(10, 67, 92, 0.2);
+  --border-card-accent: 1px solid rgba(46, 147, 110, 0.3);
+  
+  /* 🔄 Transitions */
+  --transition-smooth: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  --transition-quick: all 0.2s ease;
+  
+  /* 📱 Breakpoints */
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+}
+
+/* 🖨️ Print Optimization */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  :root {
+    --shadow-card: none;
+    --shadow-card-hover: none;
+    --shadow-light: none;
+    --shadow-medium: none;
+    --shadow-strong: none;
+  }
+  
+  body {
+    margin: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* 🍎 iOS PDF rendering fixes */
+@supports (-webkit-overflow-scrolling: touch) {
+  :root {
+    --shadow-card: none;
+    --shadow-card-hover: none;
+    --border-card: 1px solid rgba(10, 67, 92, 0.15);
+  }
+}
+
+/* 🎨 Semantic Color Utilities */
+.color-positive {
+  color: var(--color-accent);
+}
+
+.color-negative {
+  color: var(--color-warning);
+}
+
+.color-neutral {
+  color: var(--color-secondary);
+}
+
+.bg-positive {
+  background-color: var(--color-accent);
+}
+
+.bg-negative {
+  background-color: var(--color-warning);
+}
+
+.bg-neutral {
+  background-color: var(--color-secondary);
+}

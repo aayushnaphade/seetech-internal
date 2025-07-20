@@ -2,44 +2,58 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-// @ts-ignore: missing types for react-plotly.js
-// Plotly gauge (client-side only)
-const Plot: any = dynamic(() => import('react-plotly.js'), { ssr: false });
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList, Label, PolarRadiusAxis, Rectangle } from 'recharts';
+import Image from 'next/image';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
 
+// @ts-ignore: missing types for react-plotly.js
+// Plotly gauge (client-side only)
+const Plot: any = dynamic(() => import('react-plotly.js'), { ssr: false });
+
 // Enhanced modern professional styles matching the Python version EXACTLY
 const proposalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
+  
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  @media print {
+    body {
+      margin: 0;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    
+    .a4-page-container {
+      box-shadow: none;
+      margin-bottom: 0;
+    }
+    
+    .gauge-container, .chart-container {
+      break-inside: avoid;
+    }
+  }
+  
   .proposal-container {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Inter', 'Montserrat', sans-serif;
     max-width: 21cm;
     margin: 0 auto;
     background: white;
     color: #2D3B45;
     line-height: 1.6;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
-  }
-  .print-button {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    background: #0A435C;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    z-index: 1000;
+    position: relative;
   }
   
   .a4-page-container {
     width: 21cm;
-    height: 29.7cm;
+    min-height: 29.7cm;
     margin: 0 auto 20px;
-    padding: 20mm 10mm;
+    padding: 15mm;
     background: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     box-sizing: border-box;
@@ -47,54 +61,128 @@ const proposalStyles = `
     flex-direction: column;
     justify-content: flex-start;
     overflow: visible;
-    gap: 20px;
     page-break-after: always;
     page-break-inside: avoid;
+  }
+  
+  /* Content inside A4 pages should flow properly */
+  .a4-page-container > * {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .chart-container,
   .section-with-charts {
     clear: both;
     margin-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
 
-  /* consistent spacing between direct children */
+  /* Remove excessive spacing and ensure proper flow */
   .a4-page-container > * + * {
-    margin-top: 20px;
+    margin-top: 15px;
   }
 
-  /* ensure headings have top margin */
+  /* Ensure headings have proper spacing */
   .a4-page-container h1,
   .a4-page-container h2,
   .a4-page-container h3 {
-    margin-top: 20px !important;
+    margin-top: 15px !important;
+    margin-bottom: 10px !important;
   }
 
   .temperature-gauges-section {
     clear: both;
-    margin: 20px 0;
+    margin: 15px 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 15px;
     justify-content: space-between;
+    width: 100%;
+  }
+  
+  .temperature-comparison-section {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .temperature-comparison-section h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #0A435C;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .temperature-comparison-section .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  @media (min-width: 768px) {
+    .temperature-comparison-section .grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+  }
+  
+  .temperature-comparison-section .grid > * {
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .chart-container {
     page-break-inside: avoid;
-    margin: 20px 0;
+    margin: 15px 0;
     background: white;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border: 1px solid #F8FAFC;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid rgba(10, 67, 92, 0.08);
+    transition: box-shadow 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .chart-container:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   }
   
   .chart-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: #0A435C;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     text-align: center;
+    position: relative;
+    padding-bottom: 8px;
+  }
+  
+  .chart-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(to right, #2E936E, #7CDBD5);
+    border-radius: 2px;
   }
   
   .temperature-gauge {
@@ -107,64 +195,104 @@ const proposalStyles = `
   
   .gauge-container {
     text-align: center;
-    background: #f8f9fa;
-    padding: 20px;
+    background: white;
+    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border: 1px solid #F8FAFC;
-    margin: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border: 1px solid rgba(10, 67, 92, 0.1);
+    transition: transform 0.2s ease;
+    width: 240px;
+    overflow: hidden;
+  }
+  
+  .gauge-container h4 {
+    margin: 0 0 10px 0;
+    padding: 0;
+  }
+  
+  .gauge-container > div {
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+  
+  .gauge-container .plotly-graph-div {
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+  
+  .gauge-container:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
   }
   
   .gauge-value {
-    font-size: 48px;
+    font-size: 36px;
     font-weight: 700;
-    margin: 10px 0;
+    margin: 8px 0;
   }
+  
   .gauge-change {
-    font-size: 16px;
+    font-size: 14px;
     color: #1D7AA3;
-    margin: 4px 0;
+    margin: 6px 0;
     font-weight: 600;
     text-align: center;
+    background: rgba(29, 122, 163, 0.1);
+    padding: 3px 8px;
+    border-radius: 12px;
+    display: inline-block;
   }
+  
   .gauge-label {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #0A435C;
-    margin-bottom: 10px;
+    margin: 6px 0;
   }
   
   .gauge-description {
-    font-size: 14px;
+    font-size: 12px;
     color: #64748B;
   }
   
   .roi-chart-container {
     page-break-inside: avoid;
-    margin: 30px 0;
+    margin: 20px 0;
     background: white;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     border: 1px solid #F8FAFC;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .section-with-charts {
     page-break-inside: avoid;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    width: 100%;
   }
   
   .chart-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin: 20px 0;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin: 15px 0;
     page-break-inside: avoid;
+    width: 100%;
+  }
+  
+  @media (min-width: 600px) {
+    .chart-grid {
+      grid-template-columns: 1fr 1fr;
+    }
   }
   
   .single-chart {
     page-break-inside: avoid;
-    margin: 20px 0;
+    margin: 15px 0;
+    width: 100%;
   }
   
   .cover-page {
@@ -453,9 +581,10 @@ const proposalStyles = `
     border-collapse: collapse;
     margin: 30px 0;
     background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
     overflow: hidden;
+    font-family: 'Inter', 'Arial', sans-serif;
   }
   
   .metrics-table thead {
@@ -464,16 +593,16 @@ const proposalStyles = `
   }
   
   .metrics-table th {
-    padding: 15px 20px;
+    padding: 16px 20px;
     text-align: left;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
   
   .metrics-table td {
-    padding: 12px 20px;
+    padding: 14px 20px;
     border-bottom: 1px solid #E2E8F0;
     font-size: 14px;
   }
@@ -494,6 +623,55 @@ const proposalStyles = `
   .metric-value {
     font-weight: 600;
     color: #0A435C;
+  }
+  
+  .professional-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 24px 0;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .professional-table thead {
+    background: #0A435C;
+    color: white;
+  }
+  
+  .professional-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid #1D7AA3;
+  }
+  
+  .professional-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: 14px;
+  }
+  
+  .professional-table tbody tr:nth-child(even) {
+    background: rgba(248, 250, 252, 0.6);
+  }
+  
+  .professional-table tbody tr:hover {
+    background: rgba(224, 242, 254, 0.5);
+  }
+  
+  .change-positive {
+    color: #2E936E;
+    font-weight: 600;
+  }
+  
+  .change-negative {
+    color: #B23A48;
+    font-weight: 600;
   }
   
   .closing-text {
@@ -965,55 +1143,138 @@ const proposalStyles = `
   
   .key-benefits {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+    width: 100%;
   }
   
   .benefit-card {
     background: #FFFFFF;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border-left: 4px solid #2E936E;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 3px solid #2E936E;
     border: 1px solid #F8FAFC;
   }
   
   .benefit-icon {
-    font-size: 24px;
+    font-size: 20px;
     color: #2E936E;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     display: block;
   }
   
   .benefit-title {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     color: #0A435C;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   
   .benefit-description {
-    font-size: 14px;
+    font-size: 12px;
     color: #64748B;
-    line-height: 1.4;
+    line-height: 1.3;
   }
   
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin: 30px 0;
+  .section-header {
+    font-size: 20px;
+    color: #0A435C;
+    margin-bottom: 15px;
+    font-weight: 600;
+    border-bottom: 2px solid #1D7AA3;
+    padding-bottom: 6px;
+  }
+  
+  .executive-summary {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    color: #2D3B45;
+  }
+  
+  .section-intro {
+    margin-bottom: 20px;
+    line-height: 1.6;
+    color: #2D3B45;
+    font-size: 13px;
+    padding: 0 8px;
+    border-left: 3px solid #1D7AA3;
+  }
+
+  .bullet-list {
+    list-style: none;
+    padding-left: 5px;
+    margin: 15px 0;
+  }
+  
+  .bullet-list li {
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    font-size: 13px;
+  }
+  
+  .bullet-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    background-color: #2E936E;
+    border-radius: 50%;
+    opacity: 0.8;
+  }
+  
+  .bullet-list li::after {
+    content: '✓';
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  
+  .bullet-title {
+    color: #0A435C;
+    font-weight: 600;
+  }
+  
+  .bullet-detail {
+    color: #64748B;
+    font-weight: normal;
+  }
+  
+  .section-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #0A435C;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 10px;
   }
   
   .stat-card {
     background: linear-gradient(135deg, #0A435C, #1D7AA3);
     color: white;
-    padding: 25px;
-    border-radius: 10px;
+    padding: 15px;
+    border-radius: 8px;
     text-align: center;
     position: relative;
     overflow: hidden;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   
   .stat-card::before {
@@ -1027,45 +1288,51 @@ const proposalStyles = `
   }
   
   .stat-value {
-    font-size: 32px;
+    font-size: 20px;
     font-weight: 700;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     position: relative;
     z-index: 1;
   }
   
   .stat-label {
-    font-size: 14px;
+    font-size: 11px;
     opacity: 0.9;
     position: relative;
     z-index: 1;
+    line-height: 1.2;
   }
   
   .professional-table {
     width: 100%;
+    max-width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin: 15px 0;
     background: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     border: 1px solid #F8FAFC;
+    box-sizing: border-box;
+    font-size: 13px;
   }
   
   .professional-table th {
     background: #0A435C;
     color: white;
-    padding: 15px;
+    padding: 10px 8px;
     font-weight: 600;
     text-align: left;
-    font-size: 14px;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    letter-spacing: 0.3px;
   }
   
   .professional-table td {
-    padding: 12px 15px;
+    padding: 8px;
     border-bottom: 1px solid #D9E2EC;
     color: #2D3B45;
+    font-size: 12px;
+    word-wrap: break-word;
   }
   
   .professional-table tr:nth-child(even) {
@@ -1195,30 +1462,111 @@ const proposalStyles = `
   }
 `;
 
-// Plotly Temperature Gauge Component
-const PlotlyTemperatureGauge: React.FC<{ value: number; maxValue: number; label: string; color: string; showChange?: boolean; changeValue?: string }> = ({ value, maxValue, label, color, showChange, changeValue }) => (
-  <div className="gauge-container">
-    <Plot
-      data={[{
-        type: 'indicator',
-        mode: 'gauge+number',
-        value,
-        gauge: {
-          axis: { range: [0, maxValue], tickcolor: '#64748B', tickfont: { size: 12 } },
-          bar: { color },
-          bgcolor: '#E5E7EB',
-          borderwidth: 0,
-          steps: [{ range: [0, maxValue], color: '#E5E7EB' }],
-        },
-        number: { suffix: '°C', font: { size: 24 } }
-      }]}
-      layout={{ width: 200, height: 180, margin: { t: 0, b: 0, l: 0, r: 0 } }}
-      config={{ displayModeBar: false }}
-    />
-    {showChange && changeValue && <div className="gauge-change">{changeValue}</div>}
-    <div className="gauge-label">{label}</div>
-  </div>
-);
+// Enhanced Plotly Temperature Gauge Component matching Python Dash Implementation exactly
+const PlotlyTemperatureGauge: React.FC<{ 
+  value: number; 
+  maxValue: number; 
+  label: string; 
+  color: string; 
+  showChange?: boolean; 
+  changeValue?: string;
+  reference?: number;
+}> = ({ value, maxValue, label, color, showChange, changeValue, reference }) => {
+  // Calculate segments for the gauge based on total range
+  const segment1 = maxValue * 0.5;  // Green-blue zone
+  const segment2 = maxValue * 0.67; // Blue-yellow zone
+  const segment3 = maxValue * 0.84; // Yellow-red zone
+  
+  // Delta calculation - either use provided reference or compute from changeValue
+  const deltaRef = reference || (changeValue ? 
+    value + Math.abs(parseFloat(changeValue?.replace('°C', '') || '0')) : 
+    value);
+  
+  return (
+    <div className="gauge-container">
+      <Plot
+        data={[{
+          type: 'indicator',
+          mode: 'gauge+number+delta',
+          value: value,
+          title: {
+            text: label,
+            font: { family: 'Inter, sans-serif', size: 12, color: '#0A435C' }
+          },
+          delta: showChange ? { 
+            reference: deltaRef,
+            decreasing: { color: '#2E936E' },
+            increasing: { color: '#B23A48' },
+            valueformat: '.1f',
+            suffix: '°C',
+            font: { family: 'Inter, sans-serif', color: '#2D3B45', size: 12 }
+          } : undefined,
+          gauge: {
+            shape: 'angular',
+            axis: { 
+              range: [0, maxValue], 
+              ticksuffix: '°C', 
+              tickcolor: '#64748B', 
+              tickfont: { size: 10 },
+              tickwidth: 1,
+              ticklen: 6
+            },
+            bar: { color, thickness: 0.6 },
+            bgcolor: '#F8FAFC',
+            borderwidth: 2,
+            bordercolor: '#E2E8F0',
+            steps: [
+              { range: [0, segment1], color: '#c7e9b4' },
+              { range: [segment1, segment2], color: '#7fcdbb' },
+              { range: [segment2, segment3], color: '#fdae61' },
+              { range: [segment3, maxValue], color: '#d73027' }
+            ],
+            threshold: {
+              line: { color, width: 4 },
+              thickness: 0.8,
+              value: value
+            }
+          },
+          number: { 
+            suffix: '°C', 
+            font: { 
+              family: 'Inter, sans-serif', 
+              size: 20, 
+              color: '#2D3B45', 
+              weight: 'bold' 
+            },
+            valueformat: '.1f'
+          }
+        }]}
+        layout={{ 
+          width: 200, 
+          height: 200, 
+          margin: { t: 25, b: 20, l: 20, r: 20 },
+          font: { family: 'Inter, Montserrat, sans-serif' },
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          annotations: showChange && changeValue ? [
+            {
+              text: changeValue,
+              font: { size: 14, color: changeValue.includes('-') ? '#2E936E' : '#B23A48' },
+              showarrow: false,
+              x: 0.5,
+              y: 0.85,
+              xref: 'paper',
+              yref: 'paper'
+            }
+          ] : []
+        }}
+        config={{ 
+          displayModeBar: false, 
+          responsive: true,
+          staticPlot: true
+        }}
+      />
+      {showChange && changeValue && <div className="gauge-change">{changeValue}</div>}
+    </div>
+  );
+};
 
 export interface ChillerProposalData {
   clientName: string;
@@ -1241,35 +1589,37 @@ interface ChillerProposalTemplateProps {
 }
 
 export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = ({ data }) => {
-  // Calculate derived values
+
+  // Calculate derived values based on Python implementation
   const beforePowerKW = parseFloat(data.currentPower);
   const afterPowerKW = beforePowerKW * (1 - parseFloat(data.expectedSaving) / 100);
   const savingKW = beforePowerKW - afterPowerKW;
   
   // Annual calculations based on hours and rates
+  // Matching values from the Python implementation's refrigeration_dash.py
   const workingHours = 24; // 24 hours per day
-  const workingDays = 320; // 320 days per year
+  const workingDays = 320; // 320 days per year, from constants.py
   const annualHours = workingHours * workingDays;
   
   const annualEnergySaving = savingKW * annualHours; // kWh/year
   const annualMonetarySaving = annualEnergySaving * parseFloat(data.electricityRate) / 100; // Convert rate from Rs/kWh
   
-  // Water usage: 2.5 L/min = 2.5 * 60 = 150 L/hr
+  // Water usage: 2.5 L/min = 2.5 * 60 = 150 L/hr (from business_logic.py)
   const waterUsageLittersPerHour = 2.5 * 60;
   const annualWaterUsageCubicMeters = waterUsageLittersPerHour * annualHours / 1000; // Convert L to m³
   const annualWaterCost = annualWaterUsageCubicMeters * parseFloat(data.waterCost);
   
-  // Maintenance cost typically 2% of project cost
+  // Maintenance cost typically 2% of project cost (from business_logic.py)
   const projectCostValue = parseFloat(data.projectCost.replace(/,/g, ''));
   const annualMaintenanceCost = projectCostValue * 0.02;
   
-  // Net savings and payback
+  // Net savings and payback calculations
   const netAnnualSavings = annualMonetarySaving - annualWaterCost - annualMaintenanceCost;
   const annualSaving = (netAnnualSavings / 100000).toFixed(2); // In lakhs
   const paybackPeriod = (projectCostValue / netAnnualSavings).toFixed(1); // In years
   const paybackMonths = Math.round(parseFloat(paybackPeriod) * 12); // In months
   
-  // Environmental calculations
+  // Environmental calculations (from Python business_logic.py)
   const co2ReductionFactor = 0.82; // kg CO2 per kWh
   const co2Reduction = (annualEnergySaving * co2ReductionFactor / 1000).toFixed(1); // Tonnes of CO2
   
@@ -1389,8 +1739,9 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
   };
 
   return (
-    <div className="proposal-container">
+    <>
       <style dangerouslySetInnerHTML={{ __html: proposalStyles }} />
+      <div className="proposal-container">{/* Remove action buttons and ref */}
       
       {/* Cover Page */}
       <div className="a4-page-container">
@@ -1539,21 +1890,27 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
           <h1 className="section-header">1. Executive Summary</h1>
           
           <div className="executive-text">
-            <p style={{ marginBottom: '15px' }}>
+            <p style={{ marginBottom: '15px', lineHeight: '1.7' }}>
               {data.clientName}'s <strong>{data.chillerCapacity} TR {data.chillerType}</strong> currently operates with an average power 
-              consumption of <strong>{data.currentPower} kW</strong>. Our analysis using digital twin technology reveals an opportunity to 
-              substantially reduce energy consumption through <strong>adiabatic cooling</strong> technology.
+              consumption of <strong>{data.currentPower} kW</strong>. Our detailed analysis using digital twin technology has revealed a significant 
+              opportunity to reduce energy consumption through the implementation of <strong>advanced adiabatic cooling technology</strong>.
             </p>
             
-            <p style={{ marginBottom: '15px' }}>
-              Our proposal recommends installing an <strong>SEE-Tech Adiabatic Cooling System</strong> to reduce condenser 
-              temperature by <strong>7°C (from 45°C to 38°C)</strong>. Our digital twin technology has validated these projections 
-              through detailed simulation of your specific system, and our <strong>IoT-enabled monitoring</strong> will ensure continuous 
-              optimization and verification of savings.
+            <p style={{ marginBottom: '15px', lineHeight: '1.7' }}>
+              Our proposal recommends installing the <strong>SEE-Tech Adiabatic Cooling System</strong> specifically designed for your facility, which will 
+              reduce condenser temperature by <strong>7°C (from 45°C to 38°C)</strong>. This temperature reduction directly translates to improved compressor 
+              efficiency and reduced power consumption. Our proprietary digital twin simulations have validated these projections through detailed modeling of your 
+              specific system under various operating conditions.
             </p>
             
-            <p style={{ marginBottom: '25px' }}>
-              The implementation of this system is projected to deliver:
+            <p style={{ marginBottom: '15px', lineHeight: '1.7' }}>
+              The system includes <strong>IoT-enabled monitoring and control</strong> that will ensure continuous optimization and verification of savings 
+              throughout the year, adapting to seasonal variations and changing load conditions. Our remote monitoring center provides 24/7 oversight to 
+              maintain optimal system performance.
+            </p>
+            
+            <p style={{ marginBottom: '25px', fontWeight: '600', color: '#0A435C' }}>
+              The implementation of this system is projected to deliver the following benefits:
             </p>
           </div>
           
@@ -1634,22 +1991,44 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
           <h2 className="subsection-title">2.1 Adiabatic Cooling Technology</h2>
           
           <div className="description-text">
-            <p>
-              Adiabatic cooling is an energy-efficient method that leverages evaporative cooling principles to 
-              reduce the temperature of air entering the condenser. This technology works on the principle that 
-              when water evaporates, it absorbs heat from the surrounding air, effectively lowering its temperature.
+            <p style={{ marginBottom: '15px', lineHeight: '1.7' }}>
+              Adiabatic cooling is a sophisticated energy-efficient method that leverages the principles of evaporative cooling to 
+              significantly reduce the temperature of air entering the condenser. This advanced technology harnesses the natural 
+              physical principle that when water evaporates, it absorbs heat from the surrounding air (latent heat of vaporization), 
+              effectively lowering its temperature without requiring substantial mechanical energy input.
+            </p>
+            
+            <p style={{ marginBottom: '15px', lineHeight: '1.7' }}>
+              The SEE-Tech Adiabatic Cooling System creates a pre-cooling effect by passing air through specially designed wetted media 
+              before it reaches the condenser coils. This process can reduce the incoming air temperature by up to 12°C compared to ambient 
+              conditions, depending on the relative humidity and dry bulb temperature of the environment.
             </p>
             
             <p style={{ marginBottom: '20px' }}>
-              For refrigeration systems, this means:
+              For refrigeration and HVAC systems, this results in several quantifiable benefits:
             </p>
             
             <ul className="bullet-list">
-              <li>Lower condenser inlet air temperature</li>
-              <li>Reduced condensing pressure</li>
-              <li>Decreased compressor work</li>
-              <li>Improved system Coefficient of Performance (COP)</li>
-              <li>Significant energy savings</li>
+              <li>
+                <span className="bullet-title">Lower condenser inlet air temperature</span> 
+                <span className="bullet-detail">- Reducing the thermal load on the system</span>
+              </li>
+              <li>
+                <span className="bullet-title">Reduced condensing pressure</span> 
+                <span className="bullet-detail">- Allowing the compressor to work against lower pressure differential</span>
+              </li>
+              <li>
+                <span className="bullet-title">Decreased compressor work</span> 
+                <span className="bullet-detail">- Lowering power consumption and extending equipment life</span>
+              </li>
+              <li>
+                <span className="bullet-title">Improved system Coefficient of Performance (COP)</span> 
+                <span className="bullet-detail">- From approximately 2.6 to 4.3 based on our calculations</span>
+              </li>
+              <li>
+                <span className="bullet-title">Significant energy savings</span> 
+                <span className="bullet-detail">- Typically 15-25% reduction in electricity consumption</span>
+              </li>
             </ul>
           </div>
           
@@ -1753,9 +2132,9 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
             <tbody>
               <tr>
                 <td className="metric-name">Condenser Temperature</td>
-                <td>47.7°C</td>
-                <td>36.0°C</td>
-                <td className="change-positive">-11.7°C</td>
+                <td>45°C</td>
+                <td>38°C</td>
+                <td className="change-positive">-7°C</td>
               </tr>
               <tr>
                 <td className="metric-name">System COP</td>
@@ -1772,61 +2151,25 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
             </tbody>
           </table>
           
-          <div className="temperature-gauges-section">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="flex flex-col">
-                <CardHeader className="items-center pb-0">
-                  <CardTitle className="text-lg font-semibold">Before Adiabatic Cooling</CardTitle>
-                  <CardDescription>Current Operating Temperature</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-1 items-center pb-0">
-                  <div className="w-full">
-                  <PlotlyTemperatureGauge
-                      value={47.7}
-                      maxValue={60}
-                      label="Current Temperature"
-                      color="#B23A48"
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter className="flex-col gap-2 text-sm pt-4">
-                  <div className="text-center">
-                    <div className="text-sm text-muted-foreground">
-                      Operating at higher temperature
-                    </div>
-                  </div>
-                </CardFooter>
-              </Card>
-              
-              <Card className="flex flex-col">
-                <CardHeader className="items-center pb-0">
-                  <CardTitle className="text-lg font-semibold">After Adiabatic Cooling</CardTitle>
-                  <CardDescription>Optimized Operating Temperature</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-1 items-center pb-0">
-                  <div className="w-full">
-                  <PlotlyTemperatureGauge
-                      value={36}
-                      maxValue={60}
-                      label="Optimized Temperature"
-                      color="#2E936E"
-                      showChange={true}
-                      changeValue="-11.7°C"
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter className="flex-col gap-2 text-sm pt-4">
-                  <div className="flex items-center gap-2 leading-none font-medium text-center w-full justify-center">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                    <span>Temperature reduction: 11.7°C</span>
-                  </div>
-                  <div className="text-muted-foreground leading-none text-center">
-                    Significant improvement in operating efficiency
-                  </div>
-                </CardFooter>
-              </Card>
-            </div>
-          </div>
+          <h3 className="text-lg font-semibold text-center text-blue-900 mb-4 mt-6">Temperature Comparison: Before vs After</h3>
+          
+          <PlotlyTemperatureGauge
+            value={45}
+            maxValue={60}
+            label="Before: Current Temperature"
+            color="#B23A48"
+            reference={38}
+          />
+          
+          <PlotlyTemperatureGauge
+            value={38}
+            maxValue={60}
+            label="After: Optimized Temperature"
+            color="#2E936E"
+            showChange={true}
+            changeValue="-7°C"
+            reference={45}
+          />
         </div>
       </div>
       
@@ -1980,53 +2323,6 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
               </div>
             </CardFooter>
           </Card>
-          
-          {/* Temperature Comparison Gauges */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <Card className="flex flex-col">
-              <CardHeader className="items-center pb-0">
-                <CardTitle>Current Condensing Temperature</CardTitle>
-                <CardDescription>Before Adiabatic Cooling</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 items-center pb-0">
-                <div className="w-full">
-                    <PlotlyTemperatureGauge
-                    value={45}
-                    maxValue={60}
-                    label="Current Condensing Temperature"
-                    color="#B23A48"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="flex flex-col">
-              <CardHeader className="items-center pb-0">
-                <CardTitle>Optimized Condensing Temperature</CardTitle>
-                <CardDescription>With Adiabatic Cooling</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 items-center pb-0">
-                <div className="w-full">
-                    <PlotlyTemperatureGauge
-                    value={38}
-                    maxValue={60}
-                    label="Optimized Condensing Temperature"
-                    color="#2E936E"
-                    showChange={true}
-                    changeValue="-7°C"
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex-col gap-2 text-sm pt-4">
-                <div className="flex items-center gap-2 leading-none font-medium">
-                  Temperature reduction: 7°C <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="text-muted-foreground leading-none">
-                  Significant improvement in condensing efficiency
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
         </div>
         
         <div style={{ marginTop: '30px' }}>
@@ -2039,25 +2335,25 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
             temperature and inversely proportional to the wet bulb temperature of the ambient air.
           </p>
           
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value">85%</div>
-              <div className="stat-label">Cooling Efficiency</div>
+          <div className="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="stat-card bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center border border-slate-100">
+              <div className="stat-value text-3xl font-bold text-blue-900 mb-2">85%</div>
+              <div className="stat-label text-sm font-medium text-slate-600">Cooling Efficiency</div>
             </div>
             
-            <div className="stat-card">
-              <div className="stat-value">0.8</div>
-              <div className="stat-label">kW Water Pump</div>
+            <div className="stat-card bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center border border-slate-100">
+              <div className="stat-value text-3xl font-bold text-blue-900 mb-2">0.8</div>
+              <div className="stat-label text-sm font-medium text-slate-600">kW Water Pump</div>
             </div>
             
-            <div className="stat-card">
-              <div className="stat-value">2.5</div>
-              <div className="stat-label">L/min Water Flow</div>
+            <div className="stat-card bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center border border-slate-100">
+              <div className="stat-value text-3xl font-bold text-blue-900 mb-2">2.5</div>
+              <div className="stat-label text-sm font-medium text-slate-600">L/min Water Flow</div>
             </div>
             
-            <div className="stat-card">
-              <div className="stat-value">24/7</div>
-              <div className="stat-label">Operation Ready</div>
+            <div className="stat-card bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center border border-slate-100">
+              <div className="stat-value text-3xl font-bold text-blue-900 mb-2">24/7</div>
+              <div className="stat-label text-sm font-medium text-slate-600">Operation Ready</div>
             </div>
           </div>
         </div>
@@ -2067,10 +2363,17 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
       <div className="a4-page-container">
         <h1 className="section-header">Financial Analysis</h1>
         
+        <div className="section-intro">
+          <p>
+            Our comprehensive financial analysis demonstrates the compelling return on investment that the SEE-Tech Adiabatic Cooling System 
+            offers for {data.clientName}. The analysis is based on actual operational data, validated power consumption measurements, and 
+            conservative estimates of savings potential.
+          </p>
+        </div>
+        
         <div className="section-with-charts">
-          <h2 style={{ color: '#0A435C', fontSize: '20px', marginBottom: '15px' }}>
-            4.1 Cost Benefit Summary
-          </h2>
+          <h2 style={{ color: '#0A435C', fontSize: '20px', marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
+            <span className="section-number">4.1</span> Cost Benefit Summary</h2>
           
           <table className="professional-table">
             <thead>
@@ -2413,6 +2716,7 @@ export const ChillerProposalTemplate: React.FC<ChillerProposalTemplateProps> = (
         </div>
       </div>
     </div>
+    </>
   );
 };
 

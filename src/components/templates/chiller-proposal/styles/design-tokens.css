@@ -1,0 +1,88 @@
+/* 🎨 Chiller Proposal Design Language - Professional Report Styling */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
+
+:root {
+  /* 🎯 Chiller-Specific Color Palette */
+  --chiller-primary: #0F4C75;        /* Deep navy blue - trust, reliability */
+  --chiller-secondary: #3282B8;      /* Professional blue - technical expertise */
+  --chiller-accent: #0E86D4;         /* Bright blue - efficiency, innovation */
+  --chiller-success: #22C55E;        /* Green - savings, environmental benefits */
+  --chiller-warning: #F59E0B;        /* Amber - attention, important notes */
+  --chiller-danger: #EF4444;         /* Red - problems, high costs */
+  
+  /* 🌈 Supporting Colors */
+  --chiller-neutral: #F8FAFC;        /* Light background */
+  --chiller-text: #1E293B;           /* Main text */
+  --chiller-muted: #64748B;          /* Secondary text */
+  --chiller-border: #E2E8F0;         /* Borders, dividers */
+  --chiller-highlight: #FEF3C7;      /* Highlight backgrounds */
+  
+  /* 📊 Data Visualization Colors */
+  --chiller-efficiency: #10B981;     /* Efficiency improvements */
+  --chiller-cost: #EF4444;          /* Cost elements */
+  --chiller-savings: #059669;       /* Savings, benefits */
+  --chiller-neutral-data: #6B7280;  /* Neutral data points */
+  
+  /* 🎨 Gradients */
+  --chiller-gradient-header: linear-gradient(135deg, var(--chiller-primary), var(--chiller-secondary));
+  --chiller-gradient-accent: linear-gradient(135deg, var(--chiller-accent), var(--chiller-secondary));
+  --chiller-gradient-success: linear-gradient(135deg, var(--chiller-success), #16A34A);
+  
+  /* 📝 Typography System */
+  --chiller-font-body: 'Inter', sans-serif;
+  --chiller-font-heading: 'Montserrat', sans-serif;
+  
+  /* Font Sizes - Report Optimized */
+  --chiller-fs-title: 32px;
+  --chiller-fs-subtitle: 24px;
+  --chiller-fs-h2: 20px;
+  --chiller-fs-h3: 16px;
+  --chiller-fs-h4: 14px;
+  --chiller-fs-body: 13px;
+  --chiller-fs-small: 11px;
+  --chiller-fs-micro: 10px;
+  
+  /* Spacing System */
+  --chiller-space-xs: 4px;
+  --chiller-space-sm: 8px;
+  --chiller-space-md: 16px;
+  --chiller-space-lg: 24px;
+  --chiller-space-xl: 32px;
+  --chiller-space-2xl: 48px;
+  
+  /* Border Radius */
+  --chiller-radius-sm: 4px;
+  --chiller-radius-md: 8px;
+  --chiller-radius-lg: 12px;
+  
+  /* Shadows */
+  --chiller-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --chiller-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --chiller-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* 📄 Report Base Styles */
+.chiller-report {
+  font-family: var(--chiller-font-body);
+  color: var(--chiller-text);
+  line-height: 1.5;
+  background: white;
+}
+
+/* 📋 Print Optimizations */
+@media print {
+  .chiller-report {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  
+  .chiller-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .chiller-page-break {
+    page-break-before: always;
+  }
+}

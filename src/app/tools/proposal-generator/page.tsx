@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from 'react';
-import { ChillerProposalTemplate, ChillerProposalData } from '@/components/templates/chiller-proposal-template';
+import ReportTemplate from '@/components/templates/adiabatic-cooling/ReportTemplate';
+import ChillerReportTemplate from '@/components/templates/chiller-proposal/ChillerReportTemplate';
+import { AdiabaticCoolingProposalData } from '@/components/templates/adiabatic-cooling';
+import { ChillerProposalData, sampleChillerData } from '@/components/templates/chiller-proposal';
+import { sampleProposalData } from '@/components/templates/adiabatic-cooling/sample-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,41 +44,12 @@ export default function ProposalGeneratorPage() {
   const [activeTab, setActiveTab] = useState("inputs");
   const proposalRef = useRef<HTMLDivElement>(null);
   
-  const [formData, setFormData] = useState<ChillerProposalData>({
-    clientName: "Ashirwad Pipes",
-    clientLocation: "Plot 26, Attibele Industrial Area",
-    projectDate: "July 18, 2025",
-    chillerCapacity: "255",
-    chillerType: "Air-Cooled",
-    currentPower: "210.0",
-    expectedSaving: "20",
-    electricityRate: "6.5",
-    waterCost: "45",
-    projectCost: "20,30,000",
-    contactPerson: "Ayush Naphade",
-    contactEmail: "ayush@seetech.co.in",
-    contactPhone: "+91 99999 99999"
-  });
+  // Template selection state
+  const [selectedTemplate, setSelectedTemplate] = useState<'adiabatic' | 'chiller'>('chiller');
   
-  // Demo data for quick testing
-  const loadDemoData = () => {
-    setFormData({
-      clientName: "SeeTech Demo Client",
-      clientLocation: "Bangalore Technology Park",
-      projectDate: new Date().toLocaleDateString('en-IN'),
-      chillerCapacity: "300",
-      chillerType: "Air-Cooled",
-      currentPower: "250.0",
-      expectedSaving: "25",
-      electricityRate: "7.0",
-      waterCost: "50",
-      projectCost: "25,00,000",
-      contactPerson: "Demo Contact",
-      contactEmail: "demo@seetech.co.in",
-      contactPhone: "+91 88888 88888"
-    });
-  };
-
+  const [formData, setFormData] = useState<AdiabaticCoolingProposalData>(sampleProposalData);
+  const [chillerData, setChillerData] = useState<ChillerProposalData>(sampleChillerData);
+  
   // Extended form data for detailed inputs
   const [extendedFormData, setExtendedFormData] = useState({
     projectName: "Adiabatic Cooling System Implementation",
@@ -94,6 +69,24 @@ export default function ProposalGeneratorPage() {
     co2Reduction: "264.5",
     description: "Implementation of adiabatic cooling system to improve chiller efficiency and reduce energy consumption."
   });
+
+  // Demo data for quick testing
+  const loadDemoData = () => {
+    setFormData({
+      ...sampleProposalData,
+      clientName: "SeeTech Demo Client",
+      location: "Bangalore Technology Park, Karnataka",
+      date: new Date().toISOString().split('T')[0],
+      systemCapacity: "300",
+      chillerType: "Air-Cooled Screw Chiller",
+      currentPower: "250",
+      expectedSaving: "25",
+      electricityRate: "7.0",
+      investmentCost: "2500000",
+      proposalNumber: "ST-AC-DEMO-001",
+      engineerName: "SeeTech Demo Engineer"
+    });
+  };
 
   // Using react-to-print hook for reliable printing
   const handlePrint = useReactToPrint({
@@ -207,8 +200,8 @@ export default function ProposalGeneratorPage() {
                       <Label htmlFor="clientLocation">Location</Label>
                       <Textarea
                         id="clientLocation"
-                        value={formData.clientLocation}
-                        onChange={(e) => handleInputChange("clientLocation", e.target.value)}
+                        value={formData.location}
+                        onChange={(e) => handleInputChange("location", e.target.value)}
                         placeholder="Enter client location"
                         rows={3}
                       />
@@ -229,8 +222,8 @@ export default function ProposalGeneratorPage() {
                       <Input
                         id="projectDate"
                         type="date"
-                        value={formData.projectDate}
-                        onChange={(e) => handleInputChange("projectDate", e.target.value)}
+                        value={formData.date}
+                        onChange={(e) => handleInputChange("date", e.target.value)}
                       />
                     </div>
                   </CardContent>
@@ -249,8 +242,8 @@ export default function ProposalGeneratorPage() {
                         <Label htmlFor="systemCapacity">Chiller Capacity (TR)</Label>
                         <Input
                           id="systemCapacity"
-                          value={formData.chillerCapacity}
-                          onChange={(e) => handleInputChange("chillerCapacity", e.target.value)}
+                          value={formData.systemCapacity}
+                          onChange={(e) => handleInputChange("systemCapacity", e.target.value)}
                           placeholder="e.g., 255"
                         />
                       </div>
@@ -380,26 +373,17 @@ export default function ProposalGeneratorPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="projectCost">Project Cost (₹)</Label>
+                        <Label htmlFor="investmentCost">Investment Cost (₹)</Label>
                         <Input
-                          id="projectCost"
-                          value={formData.projectCost}
-                          onChange={(e) => handleInputChange("projectCost", e.target.value)}
+                          id="investmentCost"
+                          value={formData.investmentCost}
+                          onChange={(e) => handleInputChange("investmentCost", e.target.value)}
                           placeholder="e.g., 11,50,000"
                         />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="waterCost">Water Cost (₹/1000L)</Label>
-                        <Input
-                          id="waterCost"
-                          value={formData.waterCost}
-                          onChange={(e) => handleInputChange("waterCost", e.target.value)}
-                          placeholder="e.g., 45.0"
-                        />
-                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="paybackPeriod">Simple Payback (months)</Label>
                         <Input
@@ -490,8 +474,32 @@ export default function ProposalGeneratorPage() {
             </TabsContent>
 
             <TabsContent value="proposal" className="space-y-6">
+              {/* Template Selection */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Template Selection
+                  </CardTitle>
+                  <CardDescription>
+                    Choose the template style for your proposal
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4">
+                    <Button
+                      variant="default"
+                      className="flex-1"
+                      disabled
+                    >
+                      Chiller Proposal
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div ref={proposalRef}>
-                <ChillerProposalTemplate data={formData} />
+                <ChillerReportTemplate data={chillerData} />
               </div>
               
               <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
