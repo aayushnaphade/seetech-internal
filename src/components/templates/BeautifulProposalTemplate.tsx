@@ -1082,7 +1082,7 @@ export default function BeautifulProposalTemplate({ data }: { data: AdiabaticCoo
               <p>
                 The proposed adiabatic cooling system represents an excellent opportunity to achieve significant 
                 energy savings while improving overall system performance. With a payback period of just 
-                {data.paybackPeriod} years and annual savings of ₹{data.expectedSaving?.toLocaleString()}, 
+                {data.paybackPeriod} years and annual savings of ${data.expectedSaving?.toLocaleString()}, 
                 this investment will provide substantial financial returns and environmental benefits.
               </p>
               

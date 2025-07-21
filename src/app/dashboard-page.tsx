@@ -98,7 +98,7 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$47.2K</div>
+              <div className="text-2xl font-bold">₹39.2L</div>
               <p className="text-xs text-muted-foreground flex items-center">
                 <ArrowUpRight className="h-3 w-3 mr-1 text-green-500" />
                 +12% from last month
@@ -121,7 +121,7 @@ export default function Dashboard() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$286K</div>
+              <div className="text-2xl font-bold">₹2.38Cr</div>
               <p className="text-xs text-muted-foreground">Projected annual savings</p>
             </CardContent>
           </Card>
@@ -739,9 +739,9 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    { name: "ABC Manufacturing LED Retrofit", status: "Completed", savings: "$12K/year" },
-                    { name: "XYZ Office HVAC Upgrade", status: "In Progress", savings: "$8K/year" },
-                    { name: "DEF Warehouse Solar Installation", status: "Planning", savings: "$15K/year" },
+                    { name: "ABC Manufacturing LED Retrofit", status: "Completed", savings: "₹10L/year" },
+                    { name: "XYZ Office HVAC Upgrade", status: "In Progress", savings: "₹6.6L/year" },
+                    { name: "DEF Warehouse Solar Installation", status: "Planning", savings: "₹12.5L/year" },
                   ].map((project, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>

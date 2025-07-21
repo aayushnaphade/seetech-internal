@@ -254,7 +254,7 @@ export default function EnhancedKnowledgePage() {
       solution: "Implemented variable-speed drives and smart controls with real-time optimization",
       results: [
         { value: "50%", metric: "Energy Savings" },
-        { value: "$120k", metric: "Annual Savings" },
+        { value: "₹1Cr", metric: "Annual Savings" },
         { value: "18 months", metric: "ROI Period" }
       ]
     },

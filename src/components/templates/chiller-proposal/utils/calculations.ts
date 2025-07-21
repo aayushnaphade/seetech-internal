@@ -15,8 +15,8 @@ export const calculateMetrics = (data: ChillerProposalData): CalculatedMetrics =
   const powerSaving = currentPower - proposedPower;
   const annualEnergySaving = powerSaving * operatingHours;
   
-  // Calculate monetary savings (assuming $0.12/kWh average commercial rate)
-  const energyRate = 0.12;
+  // Calculate monetary savings (assuming ₹8.5/kWh average commercial rate)
+  const energyRate = 8.5;
   const annualMonetarySaving = annualEnergySaving * energyRate;
   
   // Calculate CO2 reduction (kg CO2) - 0.82 kg CO2 per kWh average
@@ -46,7 +46,7 @@ export const formatters = {
   currency: (value: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);

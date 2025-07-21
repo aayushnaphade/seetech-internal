@@ -40,14 +40,14 @@ export default function EnergyCalculatorPage() {
     power: 100,
     efficiency: 80,
     operatingHours: 8760,
-    energyRate: 0.12
+    energyRate: 8.5
   });
 
   const [proposed, setProposed] = useState<Equipment>({
     power: 80,
     efficiency: 95,
     operatingHours: 8760,
-    energyRate: 0.12
+    energyRate: 8.5
   });
 
   const [investmentCost, setInvestmentCost] = useState<number>(10000);
@@ -162,7 +162,7 @@ export default function EnergyCalculatorPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="current-rate">Energy Rate ($/kWh)</Label>
+                      <Label htmlFor="current-rate">Energy Rate (₹/kWh)</Label>
                       <Input
                         id="current-rate"
                         type="number"
@@ -202,7 +202,7 @@ export default function EnergyCalculatorPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="proposed-rate">Energy Rate ($/kWh)</Label>
+                      <Label htmlFor="proposed-rate">Energy Rate (₹/kWh)</Label>
                       <Input
                         id="proposed-rate"
                         type="number"
@@ -217,7 +217,7 @@ export default function EnergyCalculatorPage() {
                 <Separator className="my-4" />
 
                 <div className="space-y-2">
-                  <Label htmlFor="investment">Investment Cost ($)</Label>
+                  <Label htmlFor="investment">Investment Cost (₹)</Label>
                   <Input
                     id="investment"
                     type="number"
@@ -283,7 +283,7 @@ export default function EnergyCalculatorPage() {
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-blue-600">
-                            ${results.costSavings.toLocaleString()}
+                            ₹{results.costSavings.toLocaleString()}
                           </div>
                           <div className="text-xs text-muted-foreground">per year</div>
                         </div>

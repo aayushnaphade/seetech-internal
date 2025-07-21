@@ -18,7 +18,7 @@ export interface ChillerProposalData {
   expectedSaving: string;          // e.g., "15%" 
   
   // Financial Details
-  investmentCost: string;          // e.g., "$120,000"
+  investmentCost: string;          // e.g., "₹1,00,00,000"
   paybackPeriod: string;           // e.g., "2.5 years"
   roi: string;                     // e.g., "35%"
   
@@ -49,9 +49,9 @@ export interface ImplementationPhase {
 
 export interface CalculatedMetrics {
   annualEnergySaving: number;      // kWh
-  annualMonetarySaving: number;    // USD
+  annualMonetarySaving: number;    // INR
   co2Reduction: number;            // kg CO2
-  lifetimeSavings: number;         // USD over 15 years
+  lifetimeSavings: number;         // INR over 15 years
   efficiencyImprovement: number;   // percentage
 }
 
