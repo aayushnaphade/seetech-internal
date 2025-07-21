@@ -306,7 +306,7 @@ export default function Dashboard() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="savings" stroke="#4ade80" strokeWidth={2} name="Savings ($)" />
+                      <Line type="monotone" dataKey="savings" stroke="#4ade80" strokeWidth={2} name="Savings (₹)" />
                       <Line type="monotone" dataKey="co2" stroke="#ef4444" strokeWidth={2} name="CO₂ Reduction (tons)" />
                     </LineChart>
                   </ResponsiveContainer>
@@ -405,7 +405,7 @@ export default function Dashboard() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="savings" fill="#4ade80" name="Savings ($)" />
+                    <Bar dataKey="savings" fill="#4ade80" name="Savings (₹)" />
                     <Bar dataKey="projects" fill="#3b82f6" name="Projects" />
                   </BarChart>
                 </ResponsiveContainer>

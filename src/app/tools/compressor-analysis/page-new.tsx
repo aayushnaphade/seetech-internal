@@ -58,7 +58,7 @@ const ecmMethods = [
 
 export default function CompressorAnalysisPage() {
   return (
-    <div className="container mx-auto p-4 space-y-4">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -83,52 +83,70 @@ export default function CompressorAnalysisPage() {
       </Breadcrumb>
 
       {/* Header */}
-      <div className="text-center mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Compressor Analysis Suite</h1>
-        <p className="text-muted-foreground">
-          Comprehensive compressor performance analysis and energy conservation tools
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Compressor Analysis Suite</h1>
+        <p className="text-muted-foreground text-lg">
+          Comprehensive compressor performance analysis and energy conservation tools for industrial efficiency optimization
         </p>
       </div>
 
-      {/* Content Container with Side Padding */}
-      <div className="max-w-6xl mx-auto px-4 lg:px-8 space-y-4">
-        {/* Overview Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <Card className="text-center">
-          <CardContent className="p-3">
-            <BarChart3 className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-            <div className="text-lg font-bold">Performance</div>
-            <p className="text-xs text-muted-foreground">Temperature Analysis</p>
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Performance Analysis</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Temperature</div>
+            <p className="text-xs text-muted-foreground">
+              Inlet optimization analysis
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="text-center">
-          <CardContent className="p-3">
-            <Calculator className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-            <div className="text-lg font-bold">6 ECMs</div>
-            <p className="text-xs text-muted-foreground">Energy Conservation</p>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">ECM Methods</CardTitle>
+            <Calculator className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">6 ECMs</div>
+            <p className="text-xs text-muted-foreground">
+              Energy conservation measures
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="text-center">
-          <CardContent className="p-3">
-            <TrendingUp className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-            <div className="text-lg font-bold">Optimization</div>
-            <p className="text-xs text-muted-foreground">Power & Cost Savings</p>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Efficiency</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Optimization</div>
+            <p className="text-xs text-muted-foreground">
+              Power & cost savings
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="text-center">
-          <CardContent className="p-3">
-            <Gauge className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-            <div className="text-lg font-bold">Monitoring</div>
-            <p className="text-xs text-muted-foreground">Real-time Tracking</p>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monitoring</CardTitle>
+            <Gauge className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Real-time</div>
+            <p className="text-xs text-muted-foreground">
+              Performance tracking
+            </p>
           </CardContent>
         </Card>
-        </div>
+      </div>
 
-        {/* Sub-tools Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      {/* Sub-tools Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {subTools.map((tool, index) => {
           const Icon = tool.icon;
           const isAvailable = tool.status === "available";
@@ -142,42 +160,45 @@ export default function CompressorAnalysisPage() {
                   : "opacity-70 cursor-not-allowed"
               }`}
             >
-              <CardHeader className="pb-2">
+              <CardHeader className="space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Icon className={`h-5 w-5 ${isAvailable ? "text-orange-600" : "text-muted-foreground"}`} />
-                    <CardTitle className="text-base">{tool.title}</CardTitle>
+                    <CardTitle className="text-lg">{tool.title}</CardTitle>
                   </div>
                   {tool.badge && (
-                    <Badge variant={tool.badge.variant} className="text-xs">
+                    <Badge variant={tool.badge.variant}>
                       {tool.badge.text}
                     </Badge>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   {tool.description}
                 </p>
                 
-                {/* Compact Feature list */}
-                <div className="flex flex-wrap gap-1">
-                  {tool.features.map((feature, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded">
-                      <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                      {feature}
-                    </span>
-                  ))}
+                {/* Feature list */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Key Features:</h4>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    {tool.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 
                 {isAvailable ? (
                   <Link href={tool.href}>
-                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-sm">
+                    <Button className="w-full bg-orange-600 hover:bg-orange-700">
                       Launch Tool
                     </Button>
                   </Link>
                 ) : (
-                  <Button disabled className="w-full text-sm">
+                  <Button disabled className="w-full">
                     Coming Soon
                   </Button>
                 )}
@@ -185,24 +206,24 @@ export default function CompressorAnalysisPage() {
             </Card>
           );
         })}
-        </div>
+      </div>
 
-        {/* ECM Methods Overview */}
-        <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
+      {/* ECM Methods Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-orange-600" />
             Energy Conservation Methods (ECM) Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {ecmMethods.map((ecm) => {
               const Icon = ecm.icon;
               return (
-                <div key={ecm.id} className="flex items-center gap-3 p-2 border rounded-lg hover:bg-gray-50 transition-colors">
+                <div key={ecm.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex-shrink-0">
-                    <Icon className={`h-4 w-4 ${ecm.color}`} />
+                    <Icon className={`h-5 w-5 ${ecm.color}`} />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">ECM {ecm.id}</p>
@@ -212,32 +233,32 @@ export default function CompressorAnalysisPage() {
               );
             })}
           </div>
-          <div className="mt-3 pt-3 border-t">
+          <div className="mt-4 pt-4 border-t">
             <Link href="/tools/compressor-analysis/ecm-optimization">
-              <Button className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-sm">
+              <Button className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700">
                 Explore All ECM Methods
               </Button>
             </Link>
           </div>
         </CardContent>
-        </Card>
+      </Card>
 
-        {/* Info Section - Compact */}
-        <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">About Compressor Analysis Suite</CardTitle>
+      {/* Info Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>About Compressor Analysis Suite</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             The Compressor Analysis Suite provides comprehensive tools for analyzing and optimizing compressed air systems 
             in industrial facilities. Our tools help identify energy conservation opportunities, optimize operational 
             parameters, and implement proven energy-saving measures for maximum efficiency and cost reduction.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <h4 className="font-semibold mb-2">Key Capabilities:</h4>
-              <ul className="space-y-1 text-muted-foreground text-xs">
+              <ul className="space-y-1 text-muted-foreground">
                 <li>• Comprehensive performance analysis</li>
                 <li>• 6 proven energy conservation methods</li>
                 <li>• Real-time efficiency monitoring</li>
@@ -248,7 +269,7 @@ export default function CompressorAnalysisPage() {
             
             <div>
               <h4 className="font-semibold mb-2">Technical Features:</h4>
-              <ul className="space-y-1 text-muted-foreground text-xs">
+              <ul className="space-y-1 text-muted-foreground">
                 <li>• Temperature optimization algorithms</li>
                 <li>• Pressure drop analysis</li>
                 <li>• Filter performance monitoring</li>
@@ -259,8 +280,6 @@ export default function CompressorAnalysisPage() {
           </div>
         </CardContent>
       </Card>
-      
-      </div> {/* End Content Container */}
     </div>
   );
 }

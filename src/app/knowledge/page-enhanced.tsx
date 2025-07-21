@@ -505,10 +505,11 @@ export default function EnhancedKnowledgePage() {
                   <CardContent className="space-y-4">
                     {/* Formula Display */}
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="text-center text-lg">
+                      <div className="text-center">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath]}
                           rehypePlugins={[rehypeKatex]}
+                          className="text-lg"
                         >
                           {`$$${formula.formula}$$`}
                         </ReactMarkdown>
@@ -522,14 +523,13 @@ export default function EnhancedKnowledgePage() {
                         {formula.variables.map((variable, index) => (
                           <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                             <div className="flex items-center gap-2">
-                              <div className="font-mono">
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkMath]}
-                                  rehypePlugins={[rehypeKatex]}
-                                >
-                                  {`$${variable.symbol}$`}
-                                </ReactMarkdown>
-                              </div>
+                              <ReactMarkdown
+                                remarkPlugins={[remarkMath]}
+                                rehypePlugins={[rehypeKatex]}
+                                className="font-mono"
+                              >
+                                {`$${variable.symbol}$`}
+                              </ReactMarkdown>
                               <span>{variable.description}</span>
                             </div>
                             <Badge variant="secondary">{variable.unit}</Badge>
@@ -772,8 +772,8 @@ export default function EnhancedKnowledgePage() {
                         {guide.steps.map((step, index) => (
                           <div key={index} className="flex items-start gap-3 p-2 border rounded">
                             <Badge variant="secondary" className="mt-0.5">{index + 1}</Badge>
-                            <div className="flex-1 text-sm">
-                              <ReactMarkdown>
+                            <div className="flex-1">
+                              <ReactMarkdown className="text-sm">
                                 {step}
                               </ReactMarkdown>
                             </div>

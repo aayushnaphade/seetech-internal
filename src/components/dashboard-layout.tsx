@@ -79,7 +79,27 @@ const sidebarItems = [
         title: "HVAC Optimizer",
         icon: Activity,
         href: "/tools/hvac-optimizer",
-        badge: { text: "Soon", variant: "secondary" as const },
+        badge: { text: "New", variant: "default" as const },
+        submenu: [
+          {
+            title: "P-H Analyzer",
+            icon: BarChart3,
+            href: "/tools/hvac-optimizer/ph-analyzer",
+            badge: { text: "Active", variant: "default" as const },
+          },
+          {
+            title: "Cycle Optimizer",
+            icon: Zap,
+            href: "/tools/hvac-optimizer/cycle-optimizer",
+            badge: { text: "Soon", variant: "secondary" as const },
+          },
+          {
+            title: "Chiller Performance",
+            icon: Settings,
+            href: "/tools/hvac-optimizer/chiller-performance",
+            badge: { text: "Soon", variant: "secondary" as const },
+          },
+        ],
       },
       {
         title: "Lighting Designer",
@@ -160,24 +180,74 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 pl-6 pt-2">
                     {item.submenu.map((subItem) => (
-                      <Link key={subItem.title} href={subItem.href}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start",
-                            pathname === subItem.href && "bg-muted"
-                          )}
-                        >
-                          <subItem.icon className="h-3 w-3 mr-2" />
-                          <span className="text-xs">{subItem.title}</span>
-                          {subItem.badge && (
-                            <Badge variant={subItem.badge.variant} className="ml-auto text-xs">
-                              {subItem.badge.text}
-                            </Badge>
-                          )}
-                        </Button>
-                      </Link>
+                      <div key={subItem.title}>
+                        {subItem.submenu ? (
+                          <Collapsible>
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn(
+                                  "w-full justify-between",
+                                  pathname.startsWith(subItem.href) && "bg-muted"
+                                )}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <subItem.icon className="h-3 w-3" />
+                                  <span className="text-xs">{subItem.title}</span>
+                                  {subItem.badge && (
+                                    <Badge variant={subItem.badge.variant} className="text-xs">
+                                      {subItem.badge.text}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="space-y-1 pl-6 pt-1">
+                              {subItem.submenu.map((nestedItem) => (
+                                <Link key={nestedItem.title} href={nestedItem.href}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                      "w-full justify-start",
+                                      pathname === nestedItem.href && "bg-muted"
+                                    )}
+                                  >
+                                    <nestedItem.icon className="h-3 w-3 mr-2" />
+                                    <span className="text-xs">{nestedItem.title}</span>
+                                    {nestedItem.badge && (
+                                      <Badge variant={nestedItem.badge.variant} className="ml-auto text-xs">
+                                        {nestedItem.badge.text}
+                                      </Badge>
+                                    )}
+                                  </Button>
+                                </Link>
+                              ))}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ) : (
+                          <Link href={subItem.href}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={cn(
+                                "w-full justify-start",
+                                pathname === subItem.href && "bg-muted"
+                              )}
+                            >
+                              <subItem.icon className="h-3 w-3 mr-2" />
+                              <span className="text-xs">{subItem.title}</span>
+                              {subItem.badge && (
+                                <Badge variant={subItem.badge.variant} className="ml-auto text-xs">
+                                  {subItem.badge.text}
+                                </Badge>
+                              )}
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     ))}
                   </CollapsibleContent>
                 </Collapsible>

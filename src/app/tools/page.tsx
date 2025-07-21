@@ -65,8 +65,8 @@ const tools = [
     description: "Optimize HVAC systems for energy efficiency and comfort",
     icon: Activity,
     href: "/tools/hvac-optimizer",
-    status: "coming-soon",
-    badge: { text: "Soon", variant: "secondary" as const }
+    status: "available",
+    badge: { text: "New", variant: "default" as const }
   },
   {
     title: "Lighting Designer",
