@@ -4,7 +4,8 @@ import React from 'react';
 import CoverPage from '../adiabatic-cooling/components/CoverPage';
 import { ChillerProposalData } from './types';
 import { Layers, Droplets, Settings, FlaskConical, Leaf, TreePine, Globe, Award, CheckCircle, Wrench, Clock, Users, UserCheck, HardHat, ClipboardCheck, CalendarCheck, User2, Search, BarChart2, Zap, IndianRupee, Activity, Headphones, Star } from 'lucide-react';
-import Plot from 'react-plotly.js';
+import dynamic from 'next/dynamic';
+const Plot: any = dynamic(() => import('react-plotly.js'), { ssr: false });
 import { Chrono } from 'react-chrono';
 import { LucideProps } from 'lucide-react';
 
