@@ -58,3 +58,5 @@ export interface CalculatedMetrics {
 export interface ChillerProposalTemplateProps {
   data: ChillerProposalData;
 }
+
+declare module 'react-plotly.js';
