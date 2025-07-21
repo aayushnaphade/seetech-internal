@@ -718,7 +718,7 @@ export default function Dashboard() {
                     <Badge variant="secondary">Certifications</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Enhance your team's expertise with curated training materials 
+                    Enhance your team&apos;s expertise with curated training materials 
                     and professional development resources.
                   </p>
                   <Button className="w-full" variant="outline">

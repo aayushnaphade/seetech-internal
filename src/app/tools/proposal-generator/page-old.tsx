@@ -75,6 +75,8 @@ export default function ProposalGeneratorPage() {
     optimizedCOP: "4.30",
     copImprovement: "1.70"
   });
+
+  const [projectData, setProjectData] = useState({
     electricityRate: "6.5",
     waterCost: "45",
     projectCost: "20,30,000",
