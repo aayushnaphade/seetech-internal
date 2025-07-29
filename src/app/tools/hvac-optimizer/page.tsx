@@ -14,6 +14,14 @@ const subTools = [
     icon: BarChart3,
     href: "/tools/hvac-optimizer/ph-analyzer",
     status: "available",
+    badge: { text: "Available", variant: "default" as const }
+  },
+  {
+    title: "Chiller Performance Analyzer",
+    description: "Compare actual vs OEM chiller performance with optimization recommendations",
+    icon: Settings,
+    href: "/tools/hvac-optimizer/chiller-analyzer",
+    status: "available",
     badge: { text: "New", variant: "default" as const }
   },
   {
@@ -21,14 +29,6 @@ const subTools = [
     description: "Optimize refrigeration cycle parameters for maximum efficiency",
     icon: Zap,
     href: "/tools/hvac-optimizer/cycle-optimizer",
-    status: "coming-soon",
-    badge: { text: "Soon", variant: "secondary" as const }
-  },
-  {
-    title: "Chiller Performance",
-    description: "Analyze and optimize chiller performance characteristics",
-    icon: Settings,
-    href: "/tools/hvac-optimizer/chiller-performance",
     status: "coming-soon",
     badge: { text: "Soon", variant: "secondary" as const }
   },

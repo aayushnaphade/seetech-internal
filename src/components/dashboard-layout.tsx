@@ -136,7 +136,7 @@ const sidebarItems = [
   {
     title: "Data Manager",
     icon: Database,
-    href: "/data",
+    href: "/data-manager",
     badge: null,
   },
 ];
