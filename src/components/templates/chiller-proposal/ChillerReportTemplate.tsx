@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import CoverPage from '../adiabatic-cooling/components/CoverPage';
+import CoverPage from './components/CoverPage';
 import { ChillerProposalData } from './types';
 import { Layers, Droplets, Settings, FlaskConical, Leaf, TreePine, Globe, Award, CheckCircle, Wrench, Clock, Users, UserCheck, HardHat, ClipboardCheck, CalendarCheck, User2, Search, BarChart2, Zap, IndianRupee, Activity, Headphones, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
