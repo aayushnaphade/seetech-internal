@@ -14,6 +14,7 @@ import {
   Target
 } from 'lucide-react';
 import { ChillerResults, ChillerInputs } from '../types';
+import { calculateWetBulbTemperature } from '../calculations';
 
 interface ChillerRecommendationsProps {
   results: ChillerResults;
@@ -21,6 +22,8 @@ interface ChillerRecommendationsProps {
 }
 
 export function ChillerRecommendations({ results, inputs }: ChillerRecommendationsProps) {
+  // Calculate wet bulb temperature from dry bulb and relative humidity
+  const ambientWBT = calculateWetBulbTemperature(inputs.ambientDBT, inputs.relativeHumidity);
   const getPriorityIcon = (recommendation: string) => {
     if (recommendation.includes('below OEM') || recommendation.includes('High pressure')) {
       return <AlertTriangle className="h-4 w-4 text-red-600" />;
@@ -150,7 +153,7 @@ export function ChillerRecommendations({ results, inputs }: ChillerRecommendatio
                 <div className="p-3 bg-green-50 rounded border-l-4 border-green-500">
                   <div className="font-medium">Condenser Fan Control Optimization</div>
                   <div className="text-muted-foreground">
-                    Implement WBT-based condenser approach control to achieve {inputs.ambientWBT + inputs.condApproach}°C condenser temperature
+                    Implement WBT-based condenser approach control to achieve {(ambientWBT + inputs.condApproach).toFixed(1)}°C condenser temperature
                   </div>
                   <div className="text-green-600 font-medium mt-1">
                     Expected savings: {potentialSavings.toFixed(1)}%
@@ -268,7 +271,7 @@ export function ChillerRecommendations({ results, inputs }: ChillerRecommendatio
               <h4 className="font-semibold text-blue-800 mb-2">Key Assumptions</h4>
               <ul className="space-y-1 text-blue-700">
                 <li>• Constant cooling capacity maintained across all scenarios</li>
-                <li>• Environmental conditions: {inputs.ambientDBT}°C DBT, {inputs.ambientWBT}°C WBT</li>
+                <li>• Environmental conditions: {inputs.ambientDBT}°C DBT, {ambientWBT.toFixed(1)}°C WBT (calculated from {inputs.relativeHumidity}% RH)</li>
                 <li>• Compressor isentropic efficiency: {inputs.compressorEfficiency}</li>
                 <li>• Operating hours: 8760 hours/year for savings calculations</li>
                 <li>• Energy cost: $0.12/kWh (adjust based on local rates)</li>

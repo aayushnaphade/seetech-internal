@@ -62,7 +62,7 @@ export function testChillerCalculations() {
     
     // Environmental Conditions
     ambientDBT: 35.0, // °C
-    ambientWBT: 23.0, // °C
+    relativeHumidity: 60.0, // %
     
     // System Parameters
     compressorEfficiency: 0.85,

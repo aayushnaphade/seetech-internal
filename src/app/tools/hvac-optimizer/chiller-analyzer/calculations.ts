@@ -116,10 +116,17 @@ export function validateChillerInputs(inputs: ChillerInputs): ValidationError[] 
     });
   }
 
-  if (inputs.ambientWBT < -20 || inputs.ambientWBT > inputs.ambientDBT) {
+  if (inputs.relativeHumidity < 0 || inputs.relativeHumidity > 100) {
     errors.push({
-      field: 'ambientWBT',
-      message: 'Wet bulb temperature must be less than or equal to dry bulb temperature'
+      field: 'relativeHumidity',
+      message: 'Relative humidity must be between 0 and 100%'
+    });
+  }
+
+  if (inputs.relativeHumidity < 5 || inputs.relativeHumidity > 99) {
+    errors.push({
+      field: 'relativeHumidity',
+      message: 'Warning: Relative humidity outside optimal range (5-99%) for wet bulb calculation accuracy'
     });
   }
 
@@ -241,6 +248,115 @@ export function calculatePressureRatio(evapTemp: number, condTemp: number, refri
     console.error('Error calculating pressure ratio:', error);
     return 3.0; // Default reasonable value
   }
+}
+
+// Professional wet bulb temperature calculation using Stull formula
+// Accurate for RH 5-99% and temperatures -20°C to 50°C
+export function calculateWetBulbTemperature(dryBulbTemp: number, relativeHumidity: number): number {
+  // Input validation
+  if (relativeHumidity < 5 || relativeHumidity > 99) {
+    console.warn(`Relative humidity ${relativeHumidity}% outside optimal range (5-99%). Results may be less accurate.`);
+  }
+
+  if (dryBulbTemp < -20 || dryBulbTemp > 50) {
+    console.warn(`Temperature ${dryBulbTemp}°C outside optimal range (-20°C to 50°C). Results may be less accurate.`);
+  }
+
+  const T = dryBulbTemp; // °C
+  const RH = relativeHumidity; // %
+
+  // Stull formula for wet bulb temperature
+  // Tw = T * arctan(0.151977 * sqrt(RH + 8.313659)) + 0.00391838 * RH^1.5 * arctan(0.023101 * RH) 
+  //      - arctan(RH - 1.676331) + arctan(T + RH) - 4.686035
+
+  const term1 = T * Math.atan(0.151977 * Math.sqrt(RH + 8.313659));
+  const term2 = 0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH);
+  const term3 = -Math.atan(RH - 1.676331);
+  const term4 = Math.atan(T + RH);
+  const term5 = -4.686035;
+
+  const wetBulbTemp = term1 + term2 + term3 + term4 + term5;
+
+  console.log('Wet bulb temperature calculation:', {
+    dryBulbTemp: T.toFixed(1) + '°C',
+    relativeHumidity: RH.toFixed(1) + '%',
+    wetBulbTemp: wetBulbTemp.toFixed(1) + '°C',
+    formula: 'Stull (accurate for RH 5-99%, T -20°C to 50°C)'
+  });
+
+  // Validation: WBT should never exceed DBT
+  if (wetBulbTemp > dryBulbTemp) {
+    console.warn(`Calculated WBT (${wetBulbTemp.toFixed(1)}°C) exceeds DBT (${dryBulbTemp.toFixed(1)}°C). Using DBT as WBT.`);
+    return dryBulbTemp;
+  }
+
+  return wetBulbTemp;
+}
+
+// Calculate dew point temperature for additional psychrometric analysis
+export function calculateDewPointTemperature(dryBulbTemp: number, relativeHumidity: number): number {
+  const T = dryBulbTemp; // °C
+  const RH = relativeHumidity / 100; // Convert % to decimal
+
+  // Magnus formula for dew point (accurate for normal atmospheric conditions)
+  const a = 17.27;
+  const b = 237.7;
+
+  const alpha = ((a * T) / (b + T)) + Math.log(RH);
+  const dewPoint = (b * alpha) / (a - alpha);
+
+  console.log('Dew point calculation:', {
+    dryBulbTemp: T.toFixed(1) + '°C',
+    relativeHumidity: (RH * 100).toFixed(1) + '%',
+    dewPoint: dewPoint.toFixed(1) + '°C'
+  });
+
+  return dewPoint;
+}
+
+// Professional psychrometric analysis
+export function analyzePsychrometrics(dryBulbTemp: number, relativeHumidity: number): {
+  wetBulbTemp: number;
+  dewPointTemp: number;
+  analysis: string[];
+} {
+  const wetBulbTemp = calculateWetBulbTemperature(dryBulbTemp, relativeHumidity);
+  const dewPointTemp = calculateDewPointTemperature(dryBulbTemp, relativeHumidity);
+
+  const analysis: string[] = [];
+
+  // Psychrometric analysis
+  const wetBulbDepression = dryBulbTemp - wetBulbTemp;
+  const dewPointDepression = dryBulbTemp - dewPointTemp;
+
+  analysis.push(`Wet bulb depression: ${wetBulbDepression.toFixed(1)}°C`);
+  analysis.push(`Dew point depression: ${dewPointDepression.toFixed(1)}°C`);
+
+  // Cooling potential analysis
+  if (wetBulbDepression > 15) {
+    analysis.push('Excellent evaporative cooling potential');
+  } else if (wetBulbDepression > 10) {
+    analysis.push('Good evaporative cooling potential');
+  } else if (wetBulbDepression > 5) {
+    analysis.push('Moderate evaporative cooling potential');
+  } else {
+    analysis.push('Limited evaporative cooling potential');
+  }
+
+  // Humidity comfort analysis
+  if (relativeHumidity > 70) {
+    analysis.push('High humidity - may affect condenser performance');
+  } else if (relativeHumidity < 30) {
+    analysis.push('Low humidity - excellent for air-cooled condensers');
+  } else {
+    analysis.push('Moderate humidity - good for condenser operation');
+  }
+
+  return {
+    wetBulbTemp,
+    dewPointTemp,
+    analysis
+  };
 }
 
 // Calculate refrigerant density at suction conditions (for volumetric flow analysis)
@@ -500,7 +616,7 @@ function calculateVCCCycle(
 
     // Point 3: inlet to expansion valve (like Python)
     const T3 = condTemp - subcooling; // °C
-    
+
     // CRITICAL FIX: If subcooling = 0, use saturated liquid properties
     let H3, S3, rho3;
     if (Math.abs(subcooling) < 0.1) {
@@ -647,7 +763,11 @@ function calculateVCCCycle(
 // Enhanced implementation based on mechanical engineering best practices
 export function calculateChillerComparison(inputs: ChillerInputs): ChillerResults {
   try {
-    const { refrigerant, oemCapacity, oemCOP, evapPressure, condPressure, superheat, subcooling, compressorEfficiency, ambientWBT, condApproach } = inputs;
+    const { refrigerant, oemCapacity, oemCOP, evapPressure, condPressure, superheat, subcooling, compressorEfficiency, ambientDBT, relativeHumidity, condApproach } = inputs;
+
+    // Calculate wet bulb temperature from dry bulb temperature and relative humidity
+    const psychrometrics = analyzePsychrometrics(ambientDBT, relativeHumidity);
+    const ambientWBT = psychrometrics.wetBulbTemp;
 
     console.log('=== PROFESSIONAL CHILLER ANALYSIS ===');
     console.log('System parameters:', {
@@ -656,10 +776,19 @@ export function calculateChillerComparison(inputs: ChillerInputs): ChillerResult
       evapPressure: evapPressure + ' kPa',
       condPressure: condPressure + ' kPa',
       superheat: superheat + ' K',
-      subcooling: subcooling + ' K',
-      ambientWBT: ambientWBT + '°C',
-      condApproach: condApproach + 'K'
+      subcooling: subcooling + ' K'
     });
+
+    console.log('Environmental conditions:', {
+      ambientDBT: ambientDBT + '°C',
+      relativeHumidity: relativeHumidity + '%',
+      calculatedWBT: ambientWBT.toFixed(1) + '°C',
+      dewPoint: psychrometrics.dewPointTemp.toFixed(1) + '°C',
+      condApproach: condApproach + 'K',
+      optimizedCondTemp: (ambientWBT + condApproach).toFixed(1) + '°C'
+    });
+
+    console.log('Psychrometric analysis:', psychrometrics.analysis);
 
     // Calculate saturation temperatures from measured pressures
     const actualEvapTemp = saturationTemperature(evapPressure, refrigerant);
@@ -917,7 +1046,7 @@ function generateChillerPHDiagramData(
         // CRITICAL FIX: If subcooling = 0, then State 3 should be at saturated liquid line
         const actualSubcooling = results.condTemp - point3.temperature;
         const state3Enthalpy = Math.abs(actualSubcooling) < 0.1 ? h23_liquid : (point3.enthalpy || 0);
-        
+
         console.log(`${results.name} - State 3 Analysis:`, {
           condTemp: results.condTemp.toFixed(1) + '°C',
           point3Temp: point3.temperature.toFixed(1) + '°C',
@@ -1207,6 +1336,9 @@ function generateChillerRecommendations(
 ): string[] {
   const recommendations: string[] = [];
 
+  // Calculate wet bulb temperature for optimization recommendations
+  const ambientWBT = calculateWetBulbTemperature(inputs.ambientDBT, inputs.relativeHumidity);
+
   // Calculate key performance indicators
   const copDegradation = ((oemResults.cop - actualResults.cop) / oemResults.cop * 100);
   const energySavingsPotential = optimizedResults.energySavings;
@@ -1215,7 +1347,7 @@ function generateChillerRecommendations(
   // Priority 1: Major energy savings opportunity
   if (energySavingsPotential > 15) {
     recommendations.push(
-      `🎯 HIGH PRIORITY: Implement condenser optimization to achieve ${energySavingsPotential.toFixed(1)}% energy savings by reducing condensing temperature to ${(inputs.ambientWBT + inputs.condApproach).toFixed(1)}°C`
+      `🎯 HIGH PRIORITY: Implement condenser optimization to achieve ${energySavingsPotential.toFixed(1)}% energy savings by reducing condensing temperature to ${(ambientWBT + inputs.condApproach).toFixed(1)}°C`
     );
   } else if (energySavingsPotential > 8) {
     recommendations.push(

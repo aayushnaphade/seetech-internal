@@ -19,7 +19,7 @@ export interface ChillerInputs {
   
   // Environmental Conditions
   ambientDBT: number; // °C (Dry Bulb Temperature)
-  ambientWBT: number; // °C (Wet Bulb Temperature)
+  relativeHumidity: number; // % (Relative Humidity)
   
   // System Parameters
   compressorEfficiency: number; // Isentropic efficiency
@@ -235,7 +235,7 @@ export const DEFAULT_CHILLER_INPUTS: ChillerInputs = {
   
   // Environmental Conditions
   ambientDBT: 35.0, // °C
-  ambientWBT: 23.0, // °C
+  relativeHumidity: 60.0, // % (typical outdoor humidity)
   
   // System Parameters
   compressorEfficiency: 0.85,

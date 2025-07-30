@@ -234,17 +234,22 @@ export function ChillerInputForm({
             </div>
 
             <div>
-              <Label htmlFor="ambientWBT">Ambient WBT (°C)</Label>
+              <Label htmlFor="relativeHumidity">Relative Humidity (%)</Label>
               <Input
-                id="ambientWBT"
+                id="relativeHumidity"
                 type="number"
                 step="0.1"
-                value={inputs.ambientWBT}
-                onChange={(e) => onInputChange('ambientWBT', parseFloat(e.target.value))}
-                className={getFieldError('ambientWBT') ? 'border-red-500' : ''}
+                min="5"
+                max="99"
+                value={inputs.relativeHumidity}
+                onChange={(e) => onInputChange('relativeHumidity', parseFloat(e.target.value))}
+                className={getFieldError('relativeHumidity') ? 'border-red-500' : ''}
               />
-              {getFieldError('ambientWBT') && (
-                <p className="text-sm text-red-600 mt-1">{getFieldError('ambientWBT')}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                WBT calculated automatically using Stull formula
+              </p>
+              {getFieldError('relativeHumidity') && (
+                <p className="text-sm text-red-600 mt-1">{getFieldError('relativeHumidity')}</p>
               )}
             </div>
           </div>
