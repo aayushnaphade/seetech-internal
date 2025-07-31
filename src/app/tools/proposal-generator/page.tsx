@@ -41,19 +41,44 @@ export default function ProposalGeneratorPage() {
   const [chillerData, setChillerData] = useState<ChillerProposalData>(sampleChillerData);
 
 
-  // Demo data for quick testing
+  // Demo data for quick testing - Using proven Daikin RWAD900CZ-XS values
   const loadDemoData = () => {
     setChillerData({
       ...sampleChillerData,
       clientName: "SeeTech Demo Client",
       location: "Bangalore Technology Park, Karnataka",
       date: new Date().toISOString().split('T')[0],
-      systemCapacity: "300 TR",
-      currentPowerConsumption: "250 kW",
-      proposedPowerConsumption: "187.5 kW",
-      expectedSaving: "25%",
+      systemCapacity: "255 TR", // Matching Daikin RWAD900CZ-XS
+      currentPowerConsumption: "210 kW", // Actual measured power
+      proposedPowerConsumption: "168 kW", // With optimization
+      expectedSaving: "20%",
       proposalNumber: "ST-CHL-DEMO-001",
-      contactPerson: "SeeTech Demo Engineer"
+      contactPerson: "SeeTech Demo Engineer",
+      
+      // Proven Chiller Analyzer Parameters (Daikin RWAD900CZ-XS)
+      // OEM Specifications
+      oemCOP: "2.87",
+      oemCapacity: "897", // kW
+      refrigerant: "R134a",
+      
+      // Actual Sensor Data (proven values)
+      evapPressure: "307.7", // kPa
+      condPressure: "1244.0", // kPa
+      suctionTemp: "15.6", // °C (7°C evap + 8.6K superheat)
+      dischargeTemp: "65.0", // °C
+      evapLWT: "12.0", // °C
+      evapEWT: "7.0", // °C
+      superheat: "8.6", // K
+      subcooling: "0.0", // K
+      
+      // Environmental Conditions
+      ambientDBT: "35.0", // °C
+      relativeHumidity: "60.0", // %
+      condApproach: "7.0", // K
+      
+      // System Parameters
+      compressorEfficiency: "0.85",
+      systemEfficiencyFactor: "0.42" // Accounts for real-world losses
     });
   };
 
@@ -369,6 +394,287 @@ export default function ProposalGeneratorPage() {
                           onChange={(e) => handleInputChange("contactPhone", e.target.value)}
                           placeholder="Enter phone"
                         />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Comprehensive Chiller Analysis Parameters - Based on Proven Chiller Analyzer */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* OEM Specifications */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>OEM Specifications</CardTitle>
+                    <CardDescription>
+                      Original Equipment Manufacturer specifications from datasheet
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="refrigerant">Refrigerant Type</Label>
+                      <select
+                        id="refrigerant"
+                        value={chillerData.refrigerant || "R134a"}
+                        onChange={(e) => handleInputChange("refrigerant", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="R134a">R-134a (Most Common)</option>
+                        <option value="R410A">R-410A</option>
+                        <option value="R32">R-32</option>
+                        <option value="R1234yf">R-1234yf (Low GWP)</option>
+                        <option value="R1234ze">R-1234ze (Low GWP)</option>
+                        <option value="R717">R-717 (Ammonia)</option>
+                        <option value="R744">R-744 (CO2)</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="oemCOP">OEM COP</Label>
+                        <Input
+                          id="oemCOP"
+                          type="number"
+                          step="0.01"
+                          value={chillerData.oemCOP || "2.87"}
+                          onChange={(e) => handleInputChange("oemCOP", e.target.value)}
+                          placeholder="e.g., 2.87"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="oemCapacity">OEM Capacity (kW)</Label>
+                        <Input
+                          id="oemCapacity"
+                          type="number"
+                          value={chillerData.oemCapacity || "897"}
+                          onChange={(e) => handleInputChange("oemCapacity", e.target.value)}
+                          placeholder="e.g., 897"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Actual Sensor Data */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Actual Sensor Data</CardTitle>
+                    <CardDescription>
+                      Real-time readings from chiller sensors
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="evapPressure">Evap Pressure (kPa)</Label>
+                        <Input
+                          id="evapPressure"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.evapPressure || "307.7"}
+                          onChange={(e) => handleInputChange("evapPressure", e.target.value)}
+                          placeholder="e.g., 307.7"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="condPressure">Cond Pressure (kPa)</Label>
+                        <Input
+                          id="condPressure"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.condPressure || "1244.0"}
+                          onChange={(e) => handleInputChange("condPressure", e.target.value)}
+                          placeholder="e.g., 1244.0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="suctionTemp">Suction Temp (°C)</Label>
+                        <Input
+                          id="suctionTemp"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.suctionTemp || "15.6"}
+                          onChange={(e) => handleInputChange("suctionTemp", e.target.value)}
+                          placeholder="e.g., 15.6"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="dischargeTemp">Discharge Temp (°C)</Label>
+                        <Input
+                          id="dischargeTemp"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.dischargeTemp || "65.0"}
+                          onChange={(e) => handleInputChange("dischargeTemp", e.target.value)}
+                          placeholder="e.g., 65.0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="evapLWT">Evap LWT (°C)</Label>
+                        <Input
+                          id="evapLWT"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.evapLWT || "12.0"}
+                          onChange={(e) => handleInputChange("evapLWT", e.target.value)}
+                          placeholder="e.g., 12.0"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="evapEWT">Evap EWT (°C)</Label>
+                        <Input
+                          id="evapEWT"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.evapEWT || "7.0"}
+                          onChange={(e) => handleInputChange("evapEWT", e.target.value)}
+                          placeholder="e.g., 7.0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="superheat">Superheat (K)</Label>
+                        <Input
+                          id="superheat"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.superheat || "8.6"}
+                          onChange={(e) => handleInputChange("superheat", e.target.value)}
+                          placeholder="e.g., 8.6"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="subcooling">Subcooling (K)</Label>
+                        <Input
+                          id="subcooling"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.subcooling || "0.0"}
+                          onChange={(e) => handleInputChange("subcooling", e.target.value)}
+                          placeholder="e.g., 0.0"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Environmental Conditions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Environmental Conditions</CardTitle>
+                    <CardDescription>
+                      Ambient conditions affecting chiller performance
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="ambientDBT">Ambient DBT (°C)</Label>
+                        <Input
+                          id="ambientDBT"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.ambientDBT || "35.0"}
+                          onChange={(e) => handleInputChange("ambientDBT", e.target.value)}
+                          placeholder="e.g., 35.0"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="relativeHumidity">Relative Humidity (%)</Label>
+                        <Input
+                          id="relativeHumidity"
+                          type="number"
+                          step="0.1"
+                          min="5"
+                          max="99"
+                          value={chillerData.relativeHumidity || "60.0"}
+                          onChange={(e) => handleInputChange("relativeHumidity", e.target.value)}
+                          placeholder="e.g., 60.0"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          WBT calculated automatically using Stull formula
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="condApproach">Condenser Approach (K)</Label>
+                      <Input
+                        id="condApproach"
+                        type="number"
+                        step="0.1"
+                        value={chillerData.condApproach || "7.0"}
+                        onChange={(e) => handleInputChange("condApproach", e.target.value)}
+                        placeholder="e.g., 7.0"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* System Parameters */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>System Parameters</CardTitle>
+                    <CardDescription>
+                      System efficiency factors and operational parameters
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="compressorEfficiency">Compressor Efficiency</Label>
+                      <Input
+                        id="compressorEfficiency"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value={chillerData.compressorEfficiency || "0.85"}
+                        onChange={(e) => handleInputChange("compressorEfficiency", e.target.value)}
+                        placeholder="e.g., 0.85"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="systemEfficiencyFactor">System Efficiency Factor</Label>
+                      <Input
+                        id="systemEfficiencyFactor"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value={chillerData.systemEfficiencyFactor || "0.42"}
+                        onChange={(e) => handleInputChange("systemEfficiencyFactor", e.target.value)}
+                        placeholder="e.g., 0.42"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Accounts for motor, mechanical, and heat losses
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">Calculated Performance Preview</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-blue-700">Pressure Ratio:</span>
+                          <div className="font-mono text-lg">
+                            {((parseFloat(chillerData.condPressure || "1244") / parseFloat(chillerData.evapPressure || "307.7"))).toFixed(2)}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-green-700">Superheat:</span>
+                          <div className="font-mono text-lg">{chillerData.superheat || "8.6"} K</div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        <strong>Note:</strong> Based on proven Daikin RWAD900CZ-XS analysis methodology
                       </div>
                     </div>
                   </CardContent>

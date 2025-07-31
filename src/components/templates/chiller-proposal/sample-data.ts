@@ -32,6 +32,18 @@ export const sampleChillerData: ChillerProposalData = {
   currentPowerConsumption: "425 kW",
   proposedPowerConsumption: "310 kW",
   
+  // P-H Chart Parameters (exactly matching chiller-analyzer tool)
+  refrigerant: "R134a",
+  evapPressure: "3.077", // 307.7 kPa converted to bar
+  condPressure: "12.44", // 1244.0 kPa converted to bar
+  evapTemp: "7.0", // evapEWT from chiller-analyzer
+  condTemp: "42.0", // calculated from ambient + approach (35 + 7)
+  superheat: "8.6", // exactly from chiller-analyzer
+  subcooling: "0.0", // exactly from chiller-analyzer
+  ambientTemp: "35.0", // ambientDBT from chiller-analyzer
+  optimizedCondTemp: "32.0", // with adiabatic cooling (ambient - 3°C)
+  compressorEfficiency: "0.85", // exactly from chiller-analyzer
+  
   // Optional Features
   features: [
     "Variable Speed Drive (VSD) Integration",

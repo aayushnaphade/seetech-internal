@@ -10,26 +10,26 @@ export const calculateMetrics = (data: ChillerProposalData): CalculatedMetrics =
   const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
   const operatingHours = parseFloat(data.operatingHours) || 8760;
   const investmentCost = parseFloat(data.investmentCost.replace(/[^\d.-]/g, '')) || 0;
-  
+
   // Calculate annual energy saving (kWh)
   const powerSaving = currentPower - proposedPower;
   const annualEnergySaving = powerSaving * operatingHours;
-  
+
   // Calculate monetary savings (assuming ₹8.5/kWh average commercial rate)
   const energyRate = 8.5;
   const annualMonetarySaving = annualEnergySaving * energyRate;
-  
+
   // Calculate CO2 reduction (kg CO2) - 0.82 kg CO2 per kWh average
   const co2Reduction = annualEnergySaving * 0.82;
-  
+
   // Calculate lifetime savings (15 years)
   const lifetimeSavings = annualMonetarySaving * 15;
-  
+
   // Calculate efficiency improvement percentage
   const currentEfficiency = parseFloat(data.currentEfficiency) || 0;
   const proposedEfficiency = parseFloat(data.proposedEfficiency) || 0;
   const efficiencyImprovement = ((currentEfficiency - proposedEfficiency) / currentEfficiency) * 100;
-  
+
   return {
     annualEnergySaving,
     annualMonetarySaving,
@@ -51,11 +51,11 @@ export const formatters = {
       maximumFractionDigits: 0
     }).format(value);
   },
-  
+
   percentage: (value: number): string => {
     return `${value.toFixed(1)}%`;
   },
-  
+
   energy: (value: number): string => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)} GWh`;
@@ -65,7 +65,7 @@ export const formatters = {
       return `${value.toFixed(0)} kWh`;
     }
   },
-  
+
   co2: (value: number): string => {
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)} tons`;
@@ -73,7 +73,7 @@ export const formatters = {
       return `${value.toFixed(0)} kg`;
     }
   },
-  
+
   power: (value: number): string => {
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)} MW`;
@@ -94,7 +94,7 @@ export const colors = {
   warning: '#F59E0B',
   danger: '#EF4444',
   neutral: '#6B7280',
-  
+
   // Gradient definitions
   gradients: {
     efficiency: ['#22C55E', '#16A34A'],
@@ -122,10 +122,12 @@ export const chartHelpers = {
         return value.toString();
     }
   },
-  
+
   getColorByValue: (value: number, threshold: { good: number; warning: number }): string => {
     if (value >= threshold.good) return colors.success;
     if (value >= threshold.warning) return colors.warning;
     return colors.danger;
   }
 };
+
+

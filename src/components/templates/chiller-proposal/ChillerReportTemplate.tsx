@@ -2,6 +2,8 @@
 
 import React from 'react';
 import CoverPage from './components/CoverPage';
+import { PHChart, PHChartSummary } from './components/PHChart';
+import ExecutiveSummaryPage from './components/ExecutiveSummaryPage';
 import { ChillerProposalData } from './types';
 import { Layers, Droplets, Settings, FlaskConical, Leaf, TreePine, Globe, Award, CheckCircle, Wrench, Clock, Users, UserCheck, HardHat, ClipboardCheck, CalendarCheck, User2, Search, BarChart2, Zap, IndianRupee, Activity, Headphones, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -36,7 +38,7 @@ const typography = {
 
 function TableOfContents() {
   return (
-    <div style={typography.page}>
+    <div style={{...typography.page, paddingTop: 80}}>
       <h2 style={typography.title}>Table of Contents</h2>
       <div style={{ maxWidth: 700, margin: '0 auto', color: colors.text }}>
         <ol style={typography.list}>
@@ -94,57 +96,7 @@ function TableOfContents() {
   );
 }
 
-function ExecutiveSummaryPage() {
-  // Example static data for now
-  const metrics = [
-    { label: 'Chiller Capacity', value: '255 TR' },
-    { label: 'Working Days', value: '320 days' },
-    { label: 'Working Hours', value: '24 hours' },
-    { label: 'Initial Power Consumption', value: '203.8 kW/hr' },
-    { label: 'Actual Power Consumption', value: '210.0 kW/hr' },
-    { label: 'Expected Power Reduction', value: '20.0%' },
-    { label: 'Annual Energy Savings', value: '322,560 kWh/year' },
-    { label: 'Annual Cost Savings', value: '₹20,96,640 (20.97 L)/year' },
-    { label: 'Annual Water Consumption', value: '4,915.2 m³/year' },
-    { label: 'Project Cost', value: '₹11,50,000 (11.50 L)' },
-    { label: 'Simple Payback Period', value: '7 months' },
-    { label: 'NPV (15 Years)', value: '₹1,96,69,669.56 (1.97 Cr)' },
-  ];
-  return (
-    <div style={{ ...typography.page, paddingTop: 40, paddingLeft: 32, paddingRight: 32 }}>
-      <h2 style={{ ...typography.title, fontSize: 20, display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ color: colors.primaryBlue, fontWeight: 700, fontSize: 20, marginRight: 8 }}>1. Executive Summary</span>
-        <span style={{ flex: 1, height: 3, background: colors.primaryBlue, borderRadius: 2, marginLeft: 8, marginTop: 8 }} />
-      </h2>
-      <div style={{ fontSize: 15, color: colors.text, marginBottom: 18, lineHeight: 1.7 }}>
-        Ashirwad Pipes 26"s <b>255 TR air-cooled chiller</b> currently operates with an average power consumption of <b>210 kW</b>. Our analysis using digital twin technology reveals an opportunity to substantially reduce energy consumption through <b>adiabatic cooling</b> technology.<br /><br />
-        Our proposal recommends installing an <b>SEE-Tech Adiabatic Cooling System</b> to reduce condenser temperature by <span style={{ fontWeight: 700, color: colors.primaryBlue }}>11.7°C (from 47.7°C to 36.0°C)</span>. Our digital twin technology has validated these projections through detailed simulation of your specific system, and our <b>IoT-enabled monitoring</b> will ensure continuous optimization and verification of savings.<br /><br />
-        The implementation of this system is projected to deliver:
-            </div>
-      <div style={{ margin: '24px 0 24px 0', boxShadow: '0 2px 16px 0 rgba(24,52,74,0.08)', borderRadius: 10, overflow: 'hidden', background: colors.white }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-          <thead>
-            <tr style={{ background: colors.primaryBlue }}>
-              <th style={{ color: colors.white, fontWeight: 700, padding: '12px 16px', textAlign: 'left', fontSize: 14, letterSpacing: 1 }}>METRIC</th>
-              <th style={{ color: colors.white, fontWeight: 700, padding: '12px 16px', textAlign: 'left', fontSize: 14, letterSpacing: 1 }}>VALUE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {metrics.map((row, i) => (
-              <tr key={row.label} style={{ background: i % 2 === 0 ? colors.blueLight : colors.white }}>
-                <td style={{ padding: '10px 16px', fontWeight: 500, color: colors.text, borderBottom: `1px solid ${colors.border}`, fontSize: 14 }}>{row.label}</td>
-                <td style={{ padding: '10px 16px', color: colors.text, borderBottom: `1px solid ${colors.border}`, fontSize: 14 }}>{row.value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-          </div>
-      <div style={{ fontSize: 14, color: colors.textMuted, marginTop: 18, lineHeight: 1.6 }}>
-        The system's performance has been validated through detailed engineering analysis and digital twin simulation, ensuring accurate projections and minimal risk. SEE-Tech Solutions also offers a comprehensive maintenance package to ensure continued optimal performance.
-            </div>
-          </div>
-  );
-}
+// ExecutiveSummaryPage is now imported as a modular component
 
 function SystemDescriptionPage() {
   // Static content for now
@@ -231,26 +183,45 @@ function SystemDescriptionPage() {
   );
 }
 
-function OperatingParametersAndTechnicalAnalysisPage() {
+function OperatingParametersAndTechnicalAnalysisPage({ data }: { data: ChillerProposalData }) {
+  // Extract temperature values from data (DBT/WBT or condenser temps)
+  const beforeTemp = parseFloat(data.ambientDBT || data.currentCondenserTemp || data.condTemp || '47.7');
+  const afterTemp = parseFloat(data.ambientWBT || data.optimizedCondenserTemp || data.optimizedCondTemp || '36.0');
+  const tempReduction = beforeTemp - afterTemp;
+  
+  // Extract power values
+  const beforePower = parseFloat(data.currentPowerConsumption || '210.0');
+  const afterPower = parseFloat(data.proposedPowerConsumption || '168.0');
+  const powerReduction = ((beforePower - afterPower) / beforePower * 100);
+  
+  // Calculate COP values (simplified calculation)
+  const systemCapacity = parseFloat(data.systemCapacity?.replace(/[^\d.-]/g, '') || '255') * 3.517; // Convert TR to kW
+  const beforeCOP = systemCapacity / beforePower;
+  const afterCOP = systemCapacity / afterPower;
+  const copImprovement = afterCOP - beforeCOP;
+  
+  // Determine temperature label based on data type
+  const tempLabel = (data.ambientDBT && data.ambientWBT) ? 'Ambient Air Temperature (DBT → WBT)' : 'Condenser Inlet Temperature';
+  
   // Table data
   const beforeAfterRows = [
     {
-      label: 'Condenser Temperature',
-      before: '47.7°C',
-      after: '36.0°C',
-      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-11.7°C</span>,
+      label: tempLabel,
+      before: `${beforeTemp.toFixed(1)}°C`,
+      after: `${afterTemp.toFixed(1)}°C`,
+      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-{tempReduction.toFixed(1)}°C</span>,
     },
     {
       label: 'System COP',
-      before: '2.60',
-      after: '4.30',
-      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>+1.70</span>,
+      before: beforeCOP.toFixed(2),
+      after: afterCOP.toFixed(2),
+      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>+{copImprovement.toFixed(2)}</span>,
     },
     {
       label: 'Power Consumption',
-      before: '210.0 kW',
-      after: '168.0 kW',
-      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-20.0%</span>,
+      before: `${beforePower.toFixed(1)} kW`,
+      after: `${afterPower.toFixed(1)} kW`,
+      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-{powerReduction.toFixed(1)}%</span>,
     },
   ];
 
@@ -351,11 +322,11 @@ function OperatingParametersAndTechnicalAnalysisPage() {
 
   // Before gauge
   const beforeGauge = (
-    <TemperatureGauge value={47.7} />
+    <TemperatureGauge value={beforeTemp} />
   );
   // After gauge
   const afterGauge = (
-    <TemperatureGauge value={36.0} reference={47.7} isAfter />
+    <TemperatureGauge value={afterTemp} reference={beforeTemp} isAfter />
   );
 
   return (
@@ -390,14 +361,26 @@ function OperatingParametersAndTechnicalAnalysisPage() {
       {/* Gauges */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 32 }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 600, color: colors.text, marginBottom: 8 }}>Before Adiabatic Cooling</div>
+          <div style={{ fontWeight: 600, color: colors.text, marginBottom: 8 }}>
+            Before Adiabatic Cooling
+            <br />
+            <span style={{ fontSize: 12, color: colors.textMuted }}>
+              {(data.ambientDBT && data.ambientWBT) ? 'Ambient DBT' : 'Condenser Inlet'}
+            </span>
+          </div>
           {beforeGauge}
-                </div>
+        </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 600, color: colors.text, marginBottom: 8 }}>After Adiabatic Cooling</div>
+          <div style={{ fontWeight: 600, color: colors.text, marginBottom: 8 }}>
+            After Adiabatic Cooling
+            <br />
+            <span style={{ fontSize: 12, color: colors.textMuted }}>
+              {(data.ambientDBT && data.ambientWBT) ? 'Ambient WBT' : 'Optimized Inlet'}
+            </span>
+          </div>
           {afterGauge}
-                </div>
-              </div>
+        </div>
+      </div>
       {/* 3. Technical Analysis */}
       <h2 style={{ ...typography.title, fontSize: 20, display: 'flex', alignItems: 'center', marginBottom: 12, marginTop: 32 }}>
         <span style={{ color: colors.primaryBlue, fontWeight: 700, fontSize: 20, marginRight: 8 }}>3. Technical Analysis</span>
@@ -432,93 +415,7 @@ function OperatingParametersAndTechnicalAnalysisPage() {
   );
 }
 
-function PHChartVisualizationPage() {
-  // Static P-H chart data (representative, not real CoolProp)
-  const phPlotData = [
-    // Saturated Liquid Dome
-    {
-      x: [100, 150, 200, 250, 300, 350, 400],
-      y: [0, 200, 500, 1000, 2000, 3000, 4000],
-      mode: 'lines',
-      type: 'scatter',
-      name: 'Sat. Liquid Dome',
-      line: { color: '#09425d', width: 2 },
-    },
-    // Saturated Vapor Dome
-    {
-      x: [100, 150, 200, 250, 300, 350, 400],
-      y: [0, 180, 400, 900, 1800, 2700, 3600],
-      mode: 'lines',
-      type: 'scatter',
-      name: 'Sat. Vapor Dome',
-      line: { color: '#888', width: 2 },
-    },
-    // OEM Cycle
-    {
-      x: [220, 380, 380, 220, 220],
-      y: [1000, 1000, 300, 300, 1000],
-      mode: 'lines+markers',
-      type: 'scatter',
-      name: 'OEM Cycle',
-      line: { color: '#09425d', width: 2 },
-      marker: { color: '#09425d', size: 6 },
-    },
-    // Actual Cycle
-    {
-      x: [230, 390, 390, 230, 230],
-      y: [1100, 1100, 350, 350, 1100],
-      mode: 'lines+markers',
-      type: 'scatter',
-      name: 'Actual Cycle',
-      line: { color: '#e74c3c', width: 2 },
-      marker: { color: '#e74c3c', size: 6 },
-    },
-    // Optimized Solution
-    {
-      x: [210, 370, 370, 210, 210],
-      y: [900, 900, 250, 250, 900],
-      mode: 'lines+markers',
-      type: 'scatter',
-      name: 'Optimized Solution',
-      line: { color: '#1db56c', width: 2 },
-      marker: { color: '#1db56c', size: 6 },
-    },
-    // Degradation Zone
-    {
-      x: [230, 390, 390, 230, 230],
-      y: [1100, 1100, 350, 350, 1100],
-      mode: 'lines',
-      type: 'scatter',
-      name: 'Degradation Zone',
-      line: { color: '#f7b500', width: 2, dash: 'dot' },
-    },
-  ];
-  const phLayout = {
-    width: 650,
-    height: 400,
-    margin: { l: 60, r: 30, t: 40, b: 60 },
-    xaxis: {
-      title: 'Specific Enthalpy [kJ/kg]',
-      showgrid: true,
-      gridcolor: '#eaf3f7',
-      zeroline: false,
-      tickfont: { color: colors.primaryBlue, size: 14 },
-      titlefont: { color: colors.primaryBlue, size: 16 },
-    },
-    yaxis: {
-      title: 'Pressure [kPa]',
-      showgrid: true,
-      gridcolor: '#eaf3f7',
-      zeroline: false,
-      tickfont: { color: colors.primaryBlue, size: 14 },
-      titlefont: { color: colors.primaryBlue, size: 16 },
-    },
-    legend: { orientation: 'v', x: 1.02, y: 1, font: { size: 13 } },
-    plot_bgcolor: colors.white,
-    paper_bgcolor: colors.white,
-    font: { family: 'Inter, Arial, sans-serif', size: 13, color: colors.text },
-  };
-
+function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
   // Degradation zone table
   const degradationRows = [
     {
@@ -542,19 +439,14 @@ function PHChartVisualizationPage() {
   return (
     <div style={{ ...typography.page, paddingTop: 40, paddingLeft: 32, paddingRight: 32 }}>
       <h3 style={{ ...typography.section, fontSize: 16, marginTop: 0, marginBottom: 8, color: colors.primaryBlue }}>3.1 P-H Chart Visualization</h3>
-      <div style={{ fontSize: 15, color: colors.text, marginBottom: 8, lineHeight: 1.7 }}>
-        Refrigeration Cycle Comparison<br />
-        <span style={{ color: colors.primaryBlue, fontWeight: 600 }}>
-          OEM COP: 2.87, Actual COP: 2.60, Optimized COP: 4.30 (+39.5% vs Actual)
-        </span>
+      <div style={{ fontSize: 15, color: colors.text, marginBottom: 12, lineHeight: 1.7 }}>
+        The pressure-enthalpy (P-H) diagram below shows the thermodynamic analysis of your chiller system using R134a refrigerant properties. 
+        This analysis compares three operational scenarios to quantify the performance improvement potential.
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-        <Plot
-          data={phPlotData}
-          layout={phLayout}
-          config={{ displayModeBar: false }}
-          />
-        </div>
+      
+      <PHChartSummary data={data} />
+      
+      <PHChart data={data} colors={colors} />
       <h4 style={{ ...typography.section, fontSize: 15, color: colors.primaryBlue, marginTop: 24, marginBottom: 8 }}>Degradation Zone Significance</h4>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 12, lineHeight: 1.7 }}>
         The degradation zone represents the operational inefficiency due to suboptimal conditions:
@@ -1437,13 +1329,13 @@ export default function ChillerReportTemplate({ data }: ChillerReportTemplatePro
       <div className="page-break"></div>
       <TableOfContents />
       <div className="page-break"></div>
-      <ExecutiveSummaryPage />
+      <ExecutiveSummaryPage data={data} />
       <div className="page-break"></div>
       <SystemDescriptionPage />
       <div className="page-break"></div>
-      <OperatingParametersAndTechnicalAnalysisPage />
+      <OperatingParametersAndTechnicalAnalysisPage data={data} />
       <div className="page-break"></div>
-      <PHChartVisualizationPage />
+      <PHChartVisualizationPage data={data} />
       <div className="page-break"></div>
       <EnergySavingsAndFinancialAnalysisPage />
       <div className="page-break"></div>

@@ -26,6 +26,13 @@ export {
 export { ExecutiveSummary } from './components/ExecutiveSummary';
 export { Charts } from './components/Charts';
 
+// New Modular Components
+export { default as CoverPage } from './components/CoverPage';
+export { PHChart, PHChartSummary } from './components/PHChart';
+export { default as ExecutiveSummaryPage } from './components/ExecutiveSummaryPage';
+export { MetricsTable } from './components/MetricsTable';
+export { default as ProposalForm } from './components/ProposalForm';
+
 // Utilities
 export { calculateMetrics, formatters, colors, chartHelpers } from './utils/calculations';
 
