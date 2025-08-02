@@ -176,6 +176,7 @@ export default function ProposalGeneratorPage() {
       investmentCost: "₹2,04,75,000", // ~$245,000 converted to INR
       electricityTariff: "8.5", // ₹/kWh
       waterTariff: "25.0", // ₹/kL
+      operatingHours: "8760", // hours/year (24/7 operation)
       maintenanceCostType: "percentage" as const, // Default maintenance cost type
       maintenanceCostPercent: "2.0", // % of investment
       chillerFanCFM: "300000", // CFM for chiller fan

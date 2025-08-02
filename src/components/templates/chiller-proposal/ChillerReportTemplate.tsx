@@ -7,7 +7,50 @@ import ExecutiveSummaryPage from './components/ExecutiveSummaryPage';
 import { ChillerProposalData } from './types';
 import { Layers, Droplets, Settings, FlaskConical, Leaf, TreePine, Globe, Award, CheckCircle, Wrench, Clock, Users, UserCheck, HardHat, ClipboardCheck, CalendarCheck, User2, Search, BarChart2, Zap, IndianRupee, Activity, Headphones, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
-const Plot: any = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+// Enhanced Plot component with better error handling and loading states
+const Plot: any = dynamic(
+  () => import('react-plotly.js').catch(() => {
+    // Fallback component in case plotly fails to load
+    return {
+      default: ({ data, layout, config }: any) => (
+        <div style={{ 
+          width: layout?.width || 520, 
+          height: layout?.height || 260, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          border: '2px dashed #ccc',
+          borderRadius: '8px',
+          background: '#f9f9f9',
+          color: '#666',
+          fontSize: '14px'
+        }}>
+          Chart loading... (Plotly.js)
+        </div>
+      )
+    };
+  }),
+  { 
+    ssr: false,
+    loading: () => (
+      <div style={{ 
+        width: '520px', 
+        height: '260px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        border: '2px dashed #ccc',
+        borderRadius: '8px',
+        background: '#f9f9f9',
+        color: '#666',
+        fontSize: '14px'
+      }}>
+        Loading chart...
+      </div>
+    )
+  }
+);
 import { Chrono } from 'react-chrono';
 import { LucideProps } from 'lucide-react';
 
@@ -473,12 +516,57 @@ function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
   );
 }
 
-function EnergySavingsAndFinancialAnalysisPage() {
+function EnergySavingsAndFinancialAnalysisPage({ data }: { data: ChillerProposalData }) {
+  // Calculate dynamic values from proposal data
+  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
+  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
+  const operatingHours = parseFloat(data.operatingHours) || 8760;
+  const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
+  const electricityRate = parseFloat(data.electricityTariff || "8.5");
+  const waterRate = parseFloat(data.waterTariff || "25.0");
+  const waterConsumption = parseFloat(data.waterConsumption || "1200");
+  const projectLifespan = parseFloat(data.projectLifespan || "15");
+  
+  // Calculate financial metrics
+  const powerSaving = currentPower - proposedPower;
+  const annualEnergySaving = powerSaving * operatingHours;
+  const annualElectricitySavings = annualEnergySaving * electricityRate;
+  const annualWaterCost = waterConsumption * waterRate;
+  
+  // Calculate maintenance cost
+  let annualMaintenanceCost = 0;
+  const maintenanceType = data.maintenanceCostType || 'percentage';
+  
+  switch (maintenanceType) {
+    case 'percentage':
+      const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
+      annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
+      break;
+    case 'static':
+      annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
+      break;
+    case 'monthly':
+      const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
+      annualMaintenanceCost = monthlyCost * 12;
+      break;
+    case 'yearly':
+      annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
+      break;
+    case 'onetime':
+      const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
+      annualMaintenanceCost = onetimeCost / projectLifespan;
+      break;
+  }
+  
+  const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
+  const paybackYears = netAnnualSavings > 0 ? investmentCost / netAnnualSavings : 0;
+  const efficiencyImprovement = currentPower > 0 ? ((powerSaving / currentPower) * 100) : 0;
+
   // Power comparison chart data
-  const before_kw = 203.8;
-  const after_kw = 163.0;
-  const saving_kw = before_kw - after_kw;
-  const power_saving_pct = 20.0;
+  const before_kw = currentPower;
+  const after_kw = proposedPower;
+  const saving_kw = powerSaving;
+  const power_saving_pct = efficiencyImprovement;
   const barColors = ['#e74c3c', '#1db56c', '#09425d'];
 
   const powerBarData = [
@@ -549,17 +637,17 @@ function EnergySavingsAndFinancialAnalysisPage() {
 
   // Cost benefit summary table
   const costRows = [
-    { item: 'Project Cost', value: '₹11,50,000', color: colors.text },
-    { item: 'Annual Electricity Savings', value: '₹20,96,640', color: colors.secondaryGreen },
-    { item: 'Annual Water Cost', value: '₹2,21,184', color: '#e74c3c' },
-    { item: 'Annual Maintenance Cost', value: '₹23,000', color: '#e74c3c' },
-    { item: 'Net Annual Savings', value: '₹18,52,456', color: colors.secondaryGreen },
-    { item: 'Simple Payback Period', value: '7 months', color: colors.text },
+    { item: 'Project Cost', value: `₹${investmentCost.toLocaleString('en-IN')}`, color: colors.text },
+    { item: 'Annual Electricity Savings', value: `₹${annualElectricitySavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: colors.secondaryGreen },
+    { item: 'Annual Water Cost', value: `₹${annualWaterCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: '#e74c3c' },
+    { item: 'Annual Maintenance Cost', value: `₹${annualMaintenanceCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: '#e74c3c' },
+    { item: 'Net Annual Savings', value: `₹${netAnnualSavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: colors.secondaryGreen },
+    { item: 'Simple Payback Period', value: paybackYears < 1 ? `${(paybackYears * 12).toFixed(1)} months` : `${paybackYears.toFixed(1)} years`, color: colors.text },
   ];
 
   // Pie/donut chart for financial impact (compact, percent only, with custom legend)
   const pieLabels = ['Elec. Savings', 'Water Costs', 'Maint. Costs', 'Net Savings'];
-  const pieValues = [2096640, 221184, 23000, 1852456];
+  const pieValues = [annualElectricitySavings, annualWaterCost, annualMaintenanceCost, netAnnualSavings];
   const pieColors = ['#2E936E', '#B23A48', '#B23A48', '#1D7AA3'];
   const piePull = [0, 0, 0, 0.1]; // Pull out Net Savings
   const pieData = [
@@ -599,7 +687,7 @@ function EnergySavingsAndFinancialAnalysisPage() {
         />
               </div>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 24, lineHeight: 1.7 }}>
-        The 20.0% reduction in power consumption translates to annual energy savings of 322,560 kWh, resulting in monetary savings of ₹20,96,640 (20.97 L)/year.
+        The {efficiencyImprovement.toFixed(1)}% reduction in power consumption translates to annual energy savings of {annualEnergySaving.toLocaleString('en-IN', { maximumFractionDigits: 0 })} kWh, resulting in monetary savings of ₹{annualElectricitySavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({(annualElectricitySavings / 100000).toFixed(2)} L)/year.
             </div>
       {/* 4. Financial Analysis */}
       <h2 style={{ ...typography.title, fontSize: 20, display: 'flex', alignItems: 'center', marginBottom: 12, marginTop: 32 }}>
@@ -866,7 +954,7 @@ function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
   );
 }
 
-function EnvironmentalImpactPage() {
+function EnvironmentalImpactPage({ data }: { data: ChillerProposalData }) {
   // Color palette
   const darkGreen = '#2f936f';
   const forestGreen = '#3b7a40';
@@ -874,12 +962,47 @@ function EnvironmentalImpactPage() {
   const yellow = '#fac310';
   const sdgColors = ['#fac310', '#bd8b2f', '#3b7a40', '#2f936f'];
 
-  // Impact table data
+  // Calculate environmental impact from proposal data
+  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
+  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
+  const operatingHours = parseFloat(data.operatingHours) || 8760;
+  const waterConsumption = parseFloat(data.waterConsumption || "0");
+  const projectLifespan = parseFloat(data.projectLifespan || "15");
+  
+  // Calculate annual energy savings
+  const powerSaving = currentPower - proposedPower; // kW
+  const annualEnergySaving = powerSaving * operatingHours; // kWh/year
+  
+  // Grid emission factor for India (varies by region, using national average)
+  const gridEmissionFactor = 0.82; // kg CO2e/kWh (CEA 2023 data)
+  
+  // Calculate CO2 reduction
+  const annualCO2Reduction = (annualEnergySaving * gridEmissionFactor) / 1000; // tonnes CO2e/year
+  
+  // Calculate equivalent trees planted (1 tree absorbs ~21.8 kg CO2/year)
+  const treesEquivalent = Math.round(annualCO2Reduction * 1000 / 21.8);
+  
+  // Calculate 15-year impact
+  const lifetimeCO2Reduction = annualCO2Reduction * projectLifespan;
+  
+  // Impact table data (calculated dynamically)
   const impactRows = [
-    { impact: 'Annual Energy Savings', value: '322,560 kWh/year' },
-    { impact: 'Grid Emission Factor', value: '0.82 kg CO2e/kWh' },
-    { impact: 'Annual CO2e Reduction', value: '264.5 tonnes CO2e/year' },
-    { impact: 'Equivalent to Trees Planted', value: '4,364 trees' },
+    { 
+      impact: 'Annual Energy Savings', 
+      value: `${annualEnergySaving.toLocaleString('en-IN', { maximumFractionDigits: 0 })} kWh/year` 
+    },
+    { 
+      impact: 'Grid Emission Factor', 
+      value: `${gridEmissionFactor} kg CO2e/kWh` 
+    },
+    { 
+      impact: 'Annual CO2e Reduction', 
+      value: `${annualCO2Reduction.toFixed(1)} tonnes CO2e/year` 
+    },
+    { 
+      impact: 'Equivalent to Trees Planted', 
+      value: `${treesEquivalent.toLocaleString('en-IN')} trees` 
+    },
   ];
 
   // SDG badges
@@ -933,14 +1056,14 @@ function EnvironmentalImpactPage() {
             <span style={{ fontWeight: 700, fontSize: 16, color: forestGreen }}>Direct Environmental Impact</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 10 }}>
-            <div style={{ fontWeight: 700, fontSize: 22, color: darkGreen }}>264.5 <span style={{ fontSize: 13, fontWeight: 500 }}>tonnes<br />CO₂</span></div>
-            <div style={{ fontWeight: 700, fontSize: 22, color: gold }}>4,364 <span style={{ fontSize: 13, fontWeight: 500 }}>trees</span></div>
-            <div style={{ fontWeight: 700, fontSize: 22, color: '#e74c3c' }}>322.6 <span style={{ fontSize: 13, fontWeight: 500 }}>MWh</span></div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: darkGreen }}>{annualCO2Reduction.toFixed(1)} <span style={{ fontSize: 13, fontWeight: 500 }}>tonnes<br />CO₂</span></div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: gold }}>{treesEquivalent.toLocaleString('en-IN')} <span style={{ fontSize: 13, fontWeight: 500 }}>trees</span></div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: '#e74c3c' }}>{(annualEnergySaving / 1000).toFixed(1)} <span style={{ fontSize: 13, fontWeight: 500 }}>MWh</span></div>
           </div>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: colors.text, marginBottom: 8 }}>
-            <li>Reduced peak electricity demand</li>
+            <li>Reduced peak electricity demand by {powerSaving.toFixed(0)} kW</li>
             <li>Decreased strain on power infrastructure</li>
-            <li>Efficient water use: 4,915 L/year</li>
+            <li>Efficient water use: {waterConsumption.toLocaleString('en-IN', { maximumFractionDigits: 0 })} L/year</li>
           </ul>
         </div>
         {/* Strategic Benefits Card */}
@@ -970,7 +1093,7 @@ function EnvironmentalImpactPage() {
           </div>
           <div style={{ flex: 1, background: darkGreen, height: 12, borderRadius: 6, margin: '0 12px' }} />
           <div style={{ fontWeight: 700, color: darkGreen, fontSize: 15, paddingRight: 18 }}>
-            3967.5 tonnes CO₂ avoided
+            {lifetimeCO2Reduction.toFixed(1)} tonnes CO₂ avoided
           </div>
         </div>
       </div>
@@ -1249,12 +1372,62 @@ function ImplementationPlanPage() {
   );
 }
 
-function MaintenanceAndConclusionPage() {
+function MaintenanceAndConclusionPage({ data }: { data: ChillerProposalData }) {
   const themeBlue = '#09425d';
   const accentGreen = '#1db56c';
   const accentGold = '#fac310';
   const accentRed = '#e74c3c';
   const accentGray = '#e3e8ee';
+  
+  // Calculate dynamic values from proposal data
+  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
+  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
+  const operatingHours = parseFloat(data.operatingHours) || 8760;
+  const electricityRate = parseFloat(data.electricityTariff || "8.5");
+  const waterRate = parseFloat(data.waterTariff || "25.0");
+  const waterConsumption = parseFloat(data.waterConsumption || "1200");
+  const projectLifespan = parseFloat(data.projectLifespan || "15");
+  
+  // Calculate financial metrics
+  const powerSaving = currentPower - proposedPower;
+  const annualEnergySaving = powerSaving * operatingHours;
+  const annualElectricitySavings = annualEnergySaving * electricityRate;
+  const annualWaterCost = waterConsumption * waterRate;
+  
+  // Calculate maintenance cost
+  let annualMaintenanceCost = 0;
+  const maintenanceType = data.maintenanceCostType || 'percentage';
+  const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
+  
+  switch (maintenanceType) {
+    case 'percentage':
+      const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
+      annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
+      break;
+    case 'static':
+      annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
+      break;
+    case 'monthly':
+      const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
+      annualMaintenanceCost = monthlyCost * 12;
+      break;
+    case 'yearly':
+      annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
+      break;
+    case 'onetime':
+      const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
+      annualMaintenanceCost = onetimeCost / projectLifespan;
+      break;
+  }
+  
+  const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
+  const paybackYears = netAnnualSavings > 0 ? investmentCost / netAnnualSavings : 0;
+  const efficiencyImprovement = currentPower > 0 ? ((powerSaving / currentPower) * 100) : 0;
+  
+  // Calculate CO2 reduction
+  const gridEmissionFactor = 0.82; // kg CO2e/kWh
+  const annualCO2Reduction = (annualEnergySaving * gridEmissionFactor) / 1000; // tonnes CO2e/year
+  
   const cardStyle = {
     background: '#fff',
     borderRadius: 16,
@@ -1282,10 +1455,10 @@ function MaintenanceAndConclusionPage() {
     { icon: Zap, color: themeBlue, text: 'Energy efficiency validation' },
   ];
   const summaryBenefits: { icon: React.ElementType; color: string; text: string }[] = [
-    { icon: Zap, color: accentGreen, text: 'Energy savings of 20.0% on chiller power' },
-    { icon: IndianRupee, color: themeBlue, text: 'Annual savings of 2,096,640 rupees' },
-    { icon: Activity, color: accentGold, text: 'ROI period of only 7 months' },
-    { icon: Leaf, color: accentGreen, text: 'Carbon footprint reduction of 264.5 tonnes CO₂ annually' },
+    { icon: Zap, color: accentGreen, text: `Energy savings of ${efficiencyImprovement.toFixed(1)}% on chiller power` },
+    { icon: IndianRupee, color: themeBlue, text: `Annual savings of ${netAnnualSavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })} rupees` },
+    { icon: Activity, color: accentGold, text: `ROI period of ${paybackYears < 1 ? `${(paybackYears * 12).toFixed(0)} months` : `${paybackYears.toFixed(1)} years`}` },
+    { icon: Leaf, color: accentGreen, text: `Carbon footprint reduction of ${annualCO2Reduction.toFixed(1)} tonnes CO₂ annually` },
     { icon: Clock, color: themeBlue, text: 'Extended equipment lifetime and improved reliability' },
     { icon: Headphones, color: accentGold, text: 'Ongoing technical support and optimization' },
   ];
@@ -1363,7 +1536,7 @@ function MaintenanceAndConclusionPage() {
         <span style={{ fontWeight: 700, fontSize: 16, color: themeBlue }}>7.2 Conclusion</span>
       </div>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 16 }}>
-        SEE-Tech Solutions' adiabatic cooling system offers a proven, cost-effective approach to optimize your chiller's performance and achieve significant energy savings. By implementing our solution, <b>Ashirwad Pipes 26'</b> will benefit from:
+        SEE-Tech Solutions' adiabatic cooling system offers a proven, cost-effective approach to optimize your chiller's performance and achieve significant energy savings. By implementing our solution, <b>{data.clientName}</b> will benefit from:
       </div>
       {/* Benefits Grid */}
       <div style={{ background: '#fafbfc', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(9,66,93,0.06)', padding: '18px 18px', marginBottom: 18 }}>
@@ -1440,15 +1613,15 @@ export default function ChillerReportTemplate({ data }: ChillerReportTemplatePro
       <div className="page-break"></div>
       <PHChartVisualizationPage data={data} />
       <div className="page-break"></div>
-      <EnergySavingsAndFinancialAnalysisPage />
+      <EnergySavingsAndFinancialAnalysisPage data={data} />
       <div className="page-break"></div>
       <LifeCycleCostAndROIPage data={data} />
       <div className="page-break"></div>
-      <EnvironmentalImpactPage />
+      <EnvironmentalImpactPage data={data} />
       <div className="page-break"></div>
       <ImplementationPlanPage />
       <div className="page-break"></div>
-      <MaintenanceAndConclusionPage />
+      <MaintenanceAndConclusionPage data={data} />
       <div className="page-break"></div>
     </div>
   );

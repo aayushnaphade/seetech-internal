@@ -12,8 +12,49 @@ import {
     createChillerPHPlotData
 } from '@/app/tools/hvac-optimizer/chiller-analyzer/calculations';
 
-// Dynamic import for Plotly to avoid SSR issues
-const Plot: any = dynamic(() => import('react-plotly.js'), { ssr: false });
+// Enhanced Plot component with better error handling and loading states
+const Plot: any = dynamic(
+  () => import('react-plotly.js').catch(() => {
+    // Fallback component in case plotly fails to load
+    return {
+      default: ({ data, layout, config }: any) => (
+        <div style={{ 
+          width: layout?.width || 800, 
+          height: layout?.height || 600, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          border: '2px dashed #ccc',
+          borderRadius: '8px',
+          background: '#f9f9f9',
+          color: '#666',
+          fontSize: '14px'
+        }}>
+          P-H Chart loading... (Plotly.js)
+        </div>
+      )
+    };
+  }),
+  { 
+    ssr: false,
+    loading: () => (
+      <div style={{ 
+        width: '800px', 
+        height: '600px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        border: '2px dashed #ccc',
+        borderRadius: '8px',
+        background: '#f9f9f9',
+        color: '#666',
+        fontSize: '14px'
+      }}>
+        Loading P-H Chart...
+      </div>
+    )
+  }
+) as any;
 
 declare global {
     interface Window {
