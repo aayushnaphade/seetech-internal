@@ -34,14 +34,103 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 
+declare global {
+  interface Window {
+    Module: any;
+    Plotly: any;
+  }
+}
+
 export default function ProposalGeneratorPage() {
   const [activeTab, setActiveTab] = useState("inputs");
   const proposalRef = useRef<HTMLDivElement>(null);
+  const [isProposalGenerated, setIsProposalGenerated] = useState(false);
 
-  const [chillerData, setChillerData] = useState<ChillerProposalData>(sampleChillerData);
+  // Load CoolProp and Plotly libraries
+  React.useEffect(() => {
+    const loadLibraries = async () => {
+      try {
+        // Load CoolProp
+        if (!window.Module) {
+          console.log('Setting up CoolProp Module configuration...');
+          window.Module = {
+            locateFile: function(path: string) {
+              if (path.endsWith('.wasm')) {
+                return '/coolprop.wasm';
+              }
+              return path;
+            },
+            onRuntimeInitialized: function() {
+              console.log('CoolProp WASM module initialized for proposal generator');
+              // Force re-check in child components
+              window.dispatchEvent(new Event('coolprop-ready'));
+            },
+            print: function(text: string) {
+              console.log('CoolProp stdout:', text);
+            },
+            printErr: function(text: string) {
+              console.error('CoolProp stderr:', text);
+            }
+          };
+
+          const script = document.createElement('script');
+          script.src = '/coolprop.js';
+          script.onload = () => {
+            console.log('CoolProp script loaded for proposal generator');
+          };
+          script.onerror = () => {
+            console.error('Failed to load CoolProp script');
+          };
+          document.head.appendChild(script);
+        }
+
+        // Load Plotly
+        if (!window.Plotly) {
+          console.log('Loading Plotly library...');
+          const plotlyScript = document.createElement('script');
+          plotlyScript.src = 'https://cdn.plot.ly/plotly-latest.min.js';
+          plotlyScript.onload = () => {
+            console.log('Plotly script loaded for proposal generator');
+            // Force re-check in child components
+            window.dispatchEvent(new Event('plotly-ready'));
+          };
+          plotlyScript.onerror = () => {
+            console.error('Failed to load Plotly script');
+          };
+          document.head.appendChild(plotlyScript);
+        }
+      } catch (error) {
+        console.error('Error loading libraries:', error);
+      }
+    };
+
+    loadLibraries();
+  }, []);
+
+  // Initialize with enhanced sample data using chiller analyzer defaults
+  const [chillerData, setChillerData] = useState<ChillerProposalData>({
+    ...sampleChillerData,
+    // Override with proven chiller analyzer values
+    oemCOP: "2.87",
+    oemCapacity: "897",
+    refrigerant: "R134a",
+    evapPressure: "307.7",
+    condPressure: "1244.0",
+    suctionTemp: "15.6",
+    dischargeTemp: "65.0",
+    evapLWT: "12.0",
+    evapEWT: "7.0",
+    superheat: "8.6",
+    subcooling: "0.0",
+    ambientDBT: "35.0",
+    relativeHumidity: "60.0",
+    condApproach: "7.0",
+    compressorEfficiency: "0.85",
+    systemEfficiencyFactor: "0.42"
+  });
 
 
-  // Demo data for quick testing - Using proven Daikin RWAD900CZ-XS values
+  // Demo data for quick testing - Using proven Daikin RWAD900CZ-XS values from chiller analyzer
   const loadDemoData = () => {
     setChillerData({
       ...sampleChillerData,
@@ -49,19 +138,19 @@ export default function ProposalGeneratorPage() {
       location: "Bangalore Technology Park, Karnataka",
       date: new Date().toISOString().split('T')[0],
       systemCapacity: "255 TR", // Matching Daikin RWAD900CZ-XS
-      currentPowerConsumption: "210 kW", // Actual measured power
-      proposedPowerConsumption: "168 kW", // With optimization
-      expectedSaving: "20%",
+      currentPowerConsumption: "312.5 kW", // Based on actual capacity/COP
+      proposedPowerConsumption: "208.6 kW", // With optimization (33% improvement)
+      expectedSaving: "33.2%",
       proposalNumber: "ST-CHL-DEMO-001",
       contactPerson: "SeeTech Demo Engineer",
       
-      // Proven Chiller Analyzer Parameters (Daikin RWAD900CZ-XS)
+      // Proven Chiller Analyzer Parameters (Daikin RWAD900CZ-XS) - EXACT values
       // OEM Specifications
       oemCOP: "2.87",
       oemCapacity: "897", // kW
       refrigerant: "R134a",
       
-      // Actual Sensor Data (proven values)
+      // Actual Sensor Data (proven working values from chiller analyzer)
       evapPressure: "307.7", // kPa
       condPressure: "1244.0", // kPa
       suctionTemp: "15.6", // °C (7°C evap + 8.6K superheat)
@@ -102,6 +191,7 @@ export default function ProposalGeneratorPage() {
 
   const generateProposal = () => {
     console.log("Generating proposal with data:", chillerData);
+    setIsProposalGenerated(true);
     setActiveTab("proposal");
   };
 
@@ -684,7 +774,7 @@ export default function ProposalGeneratorPage() {
 
             <TabsContent value="proposal" className="space-y-6">
               <div ref={proposalRef}>
-                <ChillerReportTemplate data={chillerData} />
+                <ChillerReportTemplate data={chillerData} shouldCalculate={true} />
               </div>
 
               <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">

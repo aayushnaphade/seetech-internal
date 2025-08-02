@@ -117,12 +117,12 @@ const generateChillerAnalyzerPHData = async (data: ChillerProposalData) => {
 
             const enthalpy = cycleResults.points.map((point: any, index: number) => {
                 const h = point.enthalpy || point.h || 0;
-                console.log(`${cycleName} point ${index}: enthalpy = ${h} kJ/kg`);
-                return h; // Already in kJ/kg from chiller analyzer
+                console.log(`${cycleName} point ${index}: enthalpy = ${h}`);
+                return h;
             });
             
             const pressure = cycleResults.points.map((point: any, index: number) => {
-                const p = point.pressure || point.p || 0; // Already in bar from chiller analyzer
+                const p = (point.pressure || point.p || 0) / 100; // Convert Pa to bar if needed
                 console.log(`${cycleName} point ${index}: pressure = ${p} bar`);
                 return p;
             });
@@ -162,35 +162,13 @@ const generateChillerAnalyzerPHData = async (data: ChillerProposalData) => {
                 qualities: phDiagramData.qualityLines?.qualities || []
             };
         } else {
-            console.warn('No P-H diagram data, generating accurate saturation dome with CoolProp');
-            // Generate accurate saturation dome using CoolProp with proper unit conversions
-            const refrigerant = chillerInputs.refrigerant;
-            const liquidEnthalpy: number[] = [];
-            const vaporEnthalpy: number[] = [];
-            const pressures: number[] = [];
-            
-            // Generate saturation dome from triple point to critical point (typical range)
-            const tempRange = [-40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]; // °C
-            
-            tempRange.forEach(temp => {
-                try {
-                    // CRITICAL: Proper unit conversions following chiller analyzer pattern
-                    const pSat = window.Module.PropsSI('P', 'T', temp + 273.15, 'Q', 1, refrigerant); // Pa
-                    const hLiq = window.Module.PropsSI('H', 'T', temp + 273.15, 'Q', 0, refrigerant); // J/kg
-                    const hVap = window.Module.PropsSI('H', 'T', temp + 273.15, 'Q', 1, refrigerant); // J/kg
-                    
-                    // Convert to standard P-H diagram units
-                    pressures.push(pSat / 1e5); // Pa to bar
-                    liquidEnthalpy.push(hLiq / 1000); // J/kg to kJ/kg  
-                    vaporEnthalpy.push(hVap / 1000); // J/kg to kJ/kg
-                    
-                    console.log(`Saturation point ${temp}°C: P=${(pSat/1e5).toFixed(2)} bar, hL=${(hLiq/1000).toFixed(1)} kJ/kg, hV=${(hVap/1000).toFixed(1)} kJ/kg`);
-                } catch (e) {
-                    console.warn(`Failed to calculate saturation properties at ${temp}°C:`, e);
-                }
-            });
-            
-            saturationDome = { liquidEnthalpy, vaporEnthalpy, pressures };
+            console.warn('No P-H diagram data, using fallback saturation dome');
+            // Fallback saturation dome for R134a
+            saturationDome = {
+                liquidEnthalpy: [173, 183, 194, 205, 216, 227, 239, 251, 263, 275, 288],
+                vaporEnthalpy: [387, 392, 397, 402, 407, 411, 416, 420, 424, 427, 431],
+                pressures: [0.5, 0.8, 1.3, 2.0, 2.9, 4.1, 5.7, 7.7, 10.2, 13.2, 16.8]
+            };
             qualityLines = { enthalpy: [], pressure: [], qualities: [] };
         }
 
@@ -564,7 +542,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             line: { color: 'rgba(231, 76, 60, 0.3)', width: 1 },
             hovertemplate: 'Degradation Zone<br>Performance Loss Area<extra></extra>',
             showlegend: false
-        } as any);
+        });
     }
 
     // Add refrigeration cycles
@@ -585,7 +563,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             },
             hovertemplate: 'OEM Design<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>',
             showlegend: true
-        } as any,
+        },
 
         // Actual Operation Cycle
         {
@@ -603,7 +581,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             },
             hovertemplate: 'Actual Operation<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>',
             showlegend: true
-        } as any,
+        },
 
         // Optimized Solution Cycle
         {
@@ -621,7 +599,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             },
             hovertemplate: 'Optimized Solution<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>',
             showlegend: true
-        } as any
+        }
     );
 
     // Calculate autoscaling from cycle data

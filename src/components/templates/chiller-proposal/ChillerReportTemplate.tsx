@@ -2,7 +2,7 @@
 
 import React from 'react';
 import CoverPage from './components/CoverPage';
-import { PHChart, PHChartSummary } from './components/PHChart';
+import { PHChart } from './components/PHChart';
 import ExecutiveSummaryPage from './components/ExecutiveSummaryPage';
 import { ChillerProposalData } from './types';
 import { Layers, Droplets, Settings, FlaskConical, Leaf, TreePine, Globe, Award, CheckCircle, Wrench, Clock, Users, UserCheck, HardHat, ClipboardCheck, CalendarCheck, User2, Search, BarChart2, Zap, IndianRupee, Activity, Headphones, Star } from 'lucide-react';
@@ -415,7 +415,7 @@ function OperatingParametersAndTechnicalAnalysisPage({ data }: { data: ChillerPr
   );
 }
 
-function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
+function PHChartVisualizationPage({ data, shouldCalculate }: { data: ChillerProposalData; shouldCalculate: boolean }) {
   // Degradation zone table
   const degradationRows = [
     {
@@ -444,9 +444,14 @@ function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
         This analysis compares three operational scenarios to quantify the performance improvement potential.
       </div>
       
-      <PHChartSummary data={data} />
+      {/* PHChart Summary removed as per original requirements */}
       
-      <PHChart data={data} colors={colors} />
+      <PHChart data={data} colors={{
+        primaryBlue: '#2563eb',
+        text: '#000000',
+        white: '#ffffff',
+        blueLight: '#93c5fd'
+      }} />
       <h4 style={{ ...typography.section, fontSize: 15, color: colors.primaryBlue, marginTop: 24, marginBottom: 8 }}>Degradation Zone Significance</h4>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 12, lineHeight: 1.7 }}>
         The degradation zone represents the operational inefficiency due to suboptimal conditions:
@@ -1285,9 +1290,10 @@ function MaintenanceAndConclusionPage() {
 
 interface ChillerReportTemplateProps {
   data: ChillerProposalData;
+  shouldCalculate?: boolean;
 }
 
-export default function ChillerReportTemplate({ data }: ChillerReportTemplateProps) {
+export default function ChillerReportTemplate({ data, shouldCalculate = false }: ChillerReportTemplateProps) {
   // Default technology highlights for the cover page
   const techHighlights = [
     {
@@ -1335,7 +1341,7 @@ export default function ChillerReportTemplate({ data }: ChillerReportTemplatePro
       <div className="page-break"></div>
       <OperatingParametersAndTechnicalAnalysisPage data={data} />
       <div className="page-break"></div>
-      <PHChartVisualizationPage data={data} />
+      <PHChartVisualizationPage data={data} shouldCalculate={shouldCalculate} />
       <div className="page-break"></div>
       <EnergySavingsAndFinancialAnalysisPage />
       <div className="page-break"></div>
