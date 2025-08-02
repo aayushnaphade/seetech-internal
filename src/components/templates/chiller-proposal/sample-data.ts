@@ -34,27 +34,15 @@ export const sampleChillerData: ChillerProposalData = {
   
   // P-H Chart Parameters (exactly matching chiller-analyzer tool)
   refrigerant: "R134a",
-  evapPressure: "307.7", // kPa (matching chiller-analyzer units)
-  condPressure: "1244.0", // kPa (matching chiller-analyzer units)
+  evapPressure: "3.077", // 307.7 kPa converted to bar
+  condPressure: "12.44", // 1244.0 kPa converted to bar
   evapTemp: "7.0", // evapEWT from chiller-analyzer
   condTemp: "42.0", // calculated from ambient + approach (35 + 7)
   superheat: "8.6", // exactly from chiller-analyzer
   subcooling: "0.0", // exactly from chiller-analyzer
   ambientTemp: "35.0", // ambientDBT from chiller-analyzer
-  ambientDBT: "35.0", // ambientDBT from chiller-analyzer
-  relativeHumidity: "60.0", // % from chiller-analyzer
   optimizedCondTemp: "32.0", // with adiabatic cooling (ambient - 3°C)
   compressorEfficiency: "0.85", // exactly from chiller-analyzer
-  systemEfficiencyFactor: "0.42", // exactly from chiller-analyzer
-  
-  // Additional chiller analyzer parameters
-  oemCOP: "2.87",
-  oemCapacity: "897", // kW
-  suctionTemp: "15.6", // °C
-  dischargeTemp: "65.0", // °C
-  evapLWT: "12.0", // °C
-  evapEWT: "7.0", // °C
-  condApproach: "7.0", // K
   
   // Optional Features
   features: [

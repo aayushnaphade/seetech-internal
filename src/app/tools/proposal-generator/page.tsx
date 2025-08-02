@@ -10,6 +10,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 import {
   Download,
   FileText,
@@ -20,7 +29,15 @@ import {
   Printer,
   FileDown,
   Building2,
-  ArrowLeft
+  ArrowLeft,
+  Info,
+  DollarSign,
+  Zap,
+  Droplets,
+  Settings,
+  TrendingUp,
+  Clock,
+  BarChart3
 } from 'lucide-react';
 import Link from "next/link";
 import { useReactToPrint } from 'react-to-print';
@@ -126,23 +143,44 @@ export default function ProposalGeneratorPage() {
     relativeHumidity: "60.0",
     condApproach: "7.0",
     compressorEfficiency: "0.85",
-    systemEfficiencyFactor: "0.42"
+    systemEfficiencyFactor: "0.42",
+    // Updated to Indian currency and include new financial fields
+    investmentCost: "₹2,04,75,000",
+    electricityTariff: "8.5",
+    waterTariff: "25.0",
+    maintenanceCostType: "percentage",
+    maintenanceCostPercent: "2.0",
+    waterConsumption: "1200",
+    projectLifespan: "15",
+    paybackPeriod: "Auto-calculated",
+    roi: "Auto-calculated"
   });
 
 
   // Demo data for quick testing - Using proven Daikin RWAD900CZ-XS values from chiller analyzer
   const loadDemoData = () => {
-    setChillerData({
+    const demoData: ChillerProposalData = {
       ...sampleChillerData,
       clientName: "SeeTech Demo Client",
       location: "Bangalore Technology Park, Karnataka",
       date: new Date().toISOString().split('T')[0],
       systemCapacity: "255 TR", // Matching Daikin RWAD900CZ-XS
-      currentPowerConsumption: "312.5 kW", // Based on actual capacity/COP
-      proposedPowerConsumption: "208.6 kW", // With optimization (33% improvement)
-      expectedSaving: "33.2%",
+      currentPowerConsumption: "425", // Higher baseline for demo
+      proposedPowerConsumption: "310", // Optimized value
+      expectedSaving: "27%", // This will now drive the calculations
       proposalNumber: "ST-CHL-DEMO-001",
       contactPerson: "SeeTech Demo Engineer",
+      
+      // Updated Indian Currency Values
+      investmentCost: "₹2,04,75,000", // ~$245,000 converted to INR
+      electricityTariff: "8.5", // ₹/kWh
+      waterTariff: "25.0", // ₹/kL
+      maintenanceCostType: "percentage" as const, // Default maintenance cost type
+      maintenanceCostPercent: "2.0", // % of investment
+      waterConsumption: "1200", // kL/year
+      projectLifespan: "15", // years
+      paybackPeriod: "Auto-calculated", // Will be calculated
+      roi: "Auto-calculated", // Will be calculated
       
       // Proven Chiller Analyzer Parameters (Daikin RWAD900CZ-XS) - EXACT values
       // OEM Specifications
@@ -168,7 +206,14 @@ export default function ProposalGeneratorPage() {
       // System Parameters
       compressorEfficiency: "0.85",
       systemEfficiencyFactor: "0.42" // Accounts for real-world losses
-    });
+    };
+    
+    // Calculate financial metrics for demo data
+    const calculatedMetrics = calculateFinancialMetrics(demoData);
+    demoData.paybackPeriod = calculatedMetrics.paybackPeriod;
+    demoData.roi = calculatedMetrics.roi;
+    
+    setChillerData(demoData);
   };
 
   // Using react-to-print hook for reliable printing
@@ -181,10 +226,86 @@ export default function ProposalGeneratorPage() {
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setChillerData(prev => ({
-      ...prev,
+    const updatedData = {
+      ...chillerData,
       [field]: value
-    }));
+    };
+    
+    // Auto-calculate financial metrics when relevant fields change
+    const financialFields = [
+      'currentPowerConsumption', 'proposedPowerConsumption', 'operatingHours', 
+      'investmentCost', 'electricityTariff', 'waterTariff', 'waterConsumption', 
+      'projectLifespan', 'maintenanceCostType', 'maintenanceCostPercent', 
+      'maintenanceCostStatic', 'maintenanceCostMonthly', 'maintenanceCostYearly', 
+      'maintenanceCostOnetime'
+    ];
+    
+    if (financialFields.includes(field)) {
+      const calculatedMetrics = calculateFinancialMetrics(updatedData);
+      updatedData.paybackPeriod = calculatedMetrics.paybackPeriod;
+      updatedData.roi = calculatedMetrics.roi;
+    }
+    
+    setChillerData(updatedData);
+  };
+
+  // Enhanced function to calculate financial metrics with flexible maintenance cost options
+  const calculateFinancialMetrics = (data: ChillerProposalData) => {
+    const currentPower = parseFloat(data.currentPowerConsumption) || 0;
+    const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
+    const operatingHours = parseFloat(data.operatingHours) || 8760;
+    const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
+    const electricityRate = parseFloat(data.electricityTariff || "8.5");
+    const waterRate = parseFloat(data.waterTariff || "25.0");
+    const waterConsumption = parseFloat(data.waterConsumption || "1200");
+    const projectLifespan = parseFloat(data.projectLifespan || "15");
+    
+    const powerSaving = currentPower - proposedPower;
+    const annualEnergySaving = powerSaving * operatingHours;
+    const annualElectricitySavings = annualEnergySaving * electricityRate;
+    const annualWaterCost = waterConsumption * waterRate;
+    
+    // Calculate annual maintenance cost based on selected type
+    let annualMaintenanceCost = 0;
+    const maintenanceType = data.maintenanceCostType || 'percentage';
+    
+    switch (maintenanceType) {
+      case 'percentage':
+        const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
+        annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
+        break;
+      case 'static':
+        annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
+        break;
+      case 'monthly':
+        const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
+        annualMaintenanceCost = monthlyCost * 12;
+        break;
+      case 'yearly':
+        annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
+        break;
+      case 'onetime':
+        // For one-time cost, amortize over project lifespan
+        const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
+        annualMaintenanceCost = onetimeCost / projectLifespan;
+        break;
+      default:
+        annualMaintenanceCost = 0;
+    }
+    
+    const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
+    
+    const paybackYears = netAnnualSavings > 0 ? investmentCost / netAnnualSavings : 0;
+    const lifetimeSavings = netAnnualSavings * projectLifespan;
+    const roi = investmentCost > 0 ? ((lifetimeSavings - investmentCost) / investmentCost) * 100 : 0;
+    
+    return {
+      paybackPeriod: paybackYears < 1 ? `${(paybackYears * 12).toFixed(1)} months` : `${paybackYears.toFixed(1)} years`,
+      roi: `${roi.toFixed(1)}%`,
+      annualMaintenanceCost,
+      netAnnualSavings,
+      annualElectricitySavings
+    };
   };
 
 
@@ -406,42 +527,110 @@ export default function ProposalGeneratorPage() {
               <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Financial Impact</CardTitle>
+                    <CardTitle>Financial Impact & Tariffs</CardTitle>
                     <CardDescription>
-                      Enter the financial metrics and savings
+                      Enter financial parameters and utility tariffs for accurate ROI calculations
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="investmentCost">Investment Cost</Label>
+                        <Label htmlFor="investmentCost">Investment Cost (₹)</Label>
                         <Input
                           id="investmentCost"
                           value={chillerData.investmentCost}
                           onChange={(e) => handleInputChange("investmentCost", e.target.value)}
-                          placeholder="e.g., $245,000"
+                          placeholder="e.g., ₹2,04,75,000"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="paybackPeriod">Payback Period</Label>
+                        <Label htmlFor="electricityTariff">Electricity Tariff (₹/kWh)</Label>
                         <Input
-                          id="paybackPeriod"
-                          value={chillerData.paybackPeriod}
-                          onChange={(e) => handleInputChange("paybackPeriod", e.target.value)}
-                          placeholder="e.g., 2.1 years"
+                          id="electricityTariff"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.electricityTariff || "8.5"}
+                          onChange={(e) => handleInputChange("electricityTariff", e.target.value)}
+                          placeholder="e.g., 8.5"
                         />
+                        <p className="text-sm text-muted-foreground">
+                          Commercial electricity rate in your area
+                        </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="roi">Return on Investment</Label>
+                        <Label htmlFor="waterTariff">Water Tariff (₹/kL)</Label>
                         <Input
-                          id="roi"
-                          value={chillerData.roi}
-                          onChange={(e) => handleInputChange("roi", e.target.value)}
-                          placeholder="e.g., 42%"
+                          id="waterTariff"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.waterTariff || "25.0"}
+                          onChange={(e) => handleInputChange("waterTariff", e.target.value)}
+                          placeholder="e.g., 25.0"
                         />
+                        <p className="text-sm text-muted-foreground">
+                          Municipal/industrial water rate per kiloliter
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="maintenanceCostPercent">Maintenance Cost (% of Investment)</Label>
+                        <Input
+                          id="maintenanceCostPercent"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
+                          value={chillerData.maintenanceCostPercent || "2.0"}
+                          onChange={(e) => handleInputChange("maintenanceCostPercent", e.target.value)}
+                          placeholder="e.g., 2.0"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Annual maintenance as % of initial investment
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="waterConsumption">Water Consumption (kL/year)</Label>
+                        <Input
+                          id="waterConsumption"
+                          type="number"
+                          value={chillerData.waterConsumption || "1200"}
+                          onChange={(e) => handleInputChange("waterConsumption", e.target.value)}
+                          placeholder="e.g., 1200"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="projectLifespan">Project Lifespan (years)</Label>
+                        <Input
+                          id="projectLifespan"
+                          type="number"
+                          min="5"
+                          max="25"
+                          value={chillerData.projectLifespan || "15"}
+                          onChange={(e) => handleInputChange("projectLifespan", e.target.value)}
+                          placeholder="e.g., 15"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">Automatically Calculated</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-blue-700">Payback Period:</span>
+                          <div className="font-mono text-lg text-green-600">Auto-calculated</div>
+                        </div>
+                        <div>
+                          <span className="text-blue-700">ROI:</span>
+                          <div className="font-mono text-lg text-green-600">Auto-calculated</div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        <strong>Note:</strong> Payback period and ROI are automatically calculated based on your inputs
                       </div>
                     </div>
                   </CardContent>

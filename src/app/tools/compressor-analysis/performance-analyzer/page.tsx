@@ -30,6 +30,13 @@ interface SummaryPoint {
   savings: number;
 }
 
+declare global {
+  interface Window {
+    Module: any;
+    Plotly: any;
+  }
+}
+
 export default function PerformanceAnalyzerPage() {
   // Form state
   const [formData, setFormData] = useState({
@@ -63,7 +70,7 @@ export default function PerformanceAnalyzerPage() {
             }
             
             const script = document.createElement('script');
-            script.src = 'https://cdn.plot.ly/plotly-3.0.3.min.js';
+            script.src = 'https://cdn.plot.ly/plotly-3.0.1.min.js';
             script.onload = () => resolve();
             script.onerror = reject;
             document.head.appendChild(script);

@@ -29,9 +29,9 @@ function convertProposalDataToChillerInputs(data: ChillerProposalData): ChillerI
         oemCapacity: parseFloat(data.oemCapacity || '897'),
         refrigerant: data.refrigerant || 'R134a',
 
-        // Actual Sensor Data - Convert units properly
-        evapPressure: parseFloat(data.evapPressure || '307.7'), // kPa
-        condPressure: parseFloat(data.condPressure || '1244.0'), // kPa
+        // Actual Sensor Data
+        evapPressure: parseFloat(data.evapPressure || '307.7'),
+        condPressure: parseFloat(data.condPressure || '1244.0'),
         suctionTemp: parseFloat(data.suctionTemp || '15.6'),
         dischargeTemp: parseFloat(data.dischargeTemp || '65.0'),
         evapLWT: parseFloat(data.evapLWT || '12.0'),
@@ -61,159 +61,92 @@ function convertProposalDataToChillerInputs(data: ChillerProposalData): ChillerI
 const generateChillerAnalyzerPHData = async (data: ChillerProposalData) => {
     console.log('=== USING CHILLER ANALYZER CALCULATIONS DIRECTLY ===');
 
-    try {
-        // Verify CoolProp is ready
-        if (!window.Module || typeof window.Module.PropsSI !== 'function') {
-            throw new Error('CoolProp not available');
-        }
+    // Convert proposal data to chiller analyzer inputs
+    const chillerInputs = convertProposalDataToChillerInputs(data);
 
-        // Convert proposal data to chiller analyzer inputs
-        const chillerInputs = convertProposalDataToChillerInputs(data);
+    console.log('Chiller analyzer inputs:', {
+        oemCOP: chillerInputs.oemCOP,
+        oemCapacity: chillerInputs.oemCapacity,
+        refrigerant: chillerInputs.refrigerant,
+        evapPressure: chillerInputs.evapPressure + ' kPa',
+        condPressure: chillerInputs.condPressure + ' kPa',
+        ambientDBT: chillerInputs.ambientDBT + '°C',
+        relativeHumidity: chillerInputs.relativeHumidity + '%',
+        superheat: chillerInputs.superheat + 'K',
+        subcooling: chillerInputs.subcooling + 'K'
+    });
 
-        console.log('Chiller analyzer inputs:', {
-            oemCOP: chillerInputs.oemCOP,
-            oemCapacity: chillerInputs.oemCapacity,
-            refrigerant: chillerInputs.refrigerant,
-            evapPressure: chillerInputs.evapPressure + ' kPa',
-            condPressure: chillerInputs.condPressure + ' kPa',
-            ambientDBT: chillerInputs.ambientDBT + '°C',
-            relativeHumidity: chillerInputs.relativeHumidity + '%',
-            superheat: chillerInputs.superheat + 'K',
-            subcooling: chillerInputs.subcooling + 'K'
-        });
+    // Use the EXACT same calculation function as the chiller analyzer
+    const chillerResults = calculateChillerComparison(chillerInputs);
 
-        // Test CoolProp with a simple calculation first
-        console.log('Testing CoolProp...');
-        const testTemp = window.Module.PropsSI('T', 'P', 101325, 'Q', 0, 'R134a');
-        console.log('CoolProp test result:', testTemp, 'K');
+    console.log('Chiller analyzer results:', {
+        oemCOP: chillerResults.oem.cop.toFixed(2),
+        actualCOP: chillerResults.actual.cop.toFixed(2),
+        optimizedCOP: chillerResults.optimized.cop.toFixed(2),
+        degradationZone: chillerResults.degradationZone,
+        energySavings: chillerResults.optimized.energySavings.toFixed(1) + '%'
+    });
 
-        // Use the EXACT same calculation function as the chiller analyzer
-        const chillerResults = calculateChillerComparison(chillerInputs);
-
-        console.log('Chiller analyzer results:', {
-            oemCOP: chillerResults.oem.cop.toFixed(2),
-            actualCOP: chillerResults.actual.cop.toFixed(2),
-            optimizedCOP: chillerResults.optimized.cop.toFixed(2),
-            degradationZone: chillerResults.degradationZone,
-            energySavings: chillerResults.optimized.energySavings.toFixed(1) + '%'
-        });
-
-        // Extract cycle data from chiller analyzer results with better error handling
-        const extractCycleData = (cycleResults: any, cycleName: string) => {
-            console.log(`Processing ${cycleName} cycle:`, cycleResults);
-            
-            if (!cycleResults || !cycleResults.points || cycleResults.points.length < 4) {
-                console.warn(`Insufficient ${cycleName} cycle points, using fallback`);
-                // Create a basic rectangular cycle
-                const baseEnthalpy = cycleName === 'oem' ? 250 : cycleName === 'actual' ? 260 : 240;
-                const basePressure = cycleName === 'optimized' ? 8.0 : 12.0;
-                
-                return {
-                    enthalpy: [baseEnthalpy, baseEnthalpy + 30, baseEnthalpy - 10, baseEnthalpy - 10, baseEnthalpy],
-                    pressure: [3.08, basePressure, basePressure, 3.08, 3.08],
-                    cop: cycleResults?.cop || (cycleName === 'optimized' ? 4.3 : cycleName === 'oem' ? 2.87 : 2.6)
-                };
-            }
-
-            const enthalpy = cycleResults.points.map((point: any, index: number) => {
-                const h = point.enthalpy || point.h || 0;
-                console.log(`${cycleName} point ${index}: enthalpy = ${h} kJ/kg`);
-                return h; // Already in kJ/kg from chiller analyzer
-            });
-            
-            const pressure = cycleResults.points.map((point: any, index: number) => {
-                const p = point.pressure || point.p || 0; // Already in bar from chiller analyzer
-                console.log(`${cycleName} point ${index}: pressure = ${p} bar`);
-                return p;
-            });
-
-            // Close the cycle
-            enthalpy.push(enthalpy[0]);
-            pressure.push(pressure[0]);
-
+    // Extract cycle data from chiller analyzer results
+    const extractCycleData = (cycleResults: any) => {
+        if (!cycleResults.points || cycleResults.points.length < 4) {
+            console.warn('Insufficient cycle points, using fallback');
             return {
-                enthalpy,
-                pressure,
-                cop: cycleResults.cop
+                enthalpy: [250, 290, 240, 240, 250],
+                pressure: [3.08, 12.44, 12.44, 3.08, 3.08],
+                cop: cycleResults.cop || 2.5
             };
-        };
-
-        const oemCycle = extractCycleData(chillerResults.oem, 'oem');
-        const actualCycle = extractCycleData(chillerResults.actual, 'actual');
-        const optimizedCycle = extractCycleData(chillerResults.optimized, 'optimized');
-
-        // Extract saturation dome data from chiller analyzer P-H diagram data with fallback
-        let saturationDome;
-        let qualityLines;
-
-        if (chillerResults.phDiagramData) {
-            const phDiagramData = chillerResults.phDiagramData;
-            console.log('P-H diagram data available:', Object.keys(phDiagramData));
-
-            saturationDome = {
-                liquidEnthalpy: phDiagramData.saturatedLiquidEnthalpy || [],
-                vaporEnthalpy: phDiagramData.saturatedVaporEnthalpy || [],
-                pressures: phDiagramData.saturationPressure || []
-            };
-
-            qualityLines = {
-                enthalpy: phDiagramData.qualityLines?.enthalpy || [],
-                pressure: phDiagramData.qualityLines?.pressure || [],
-                qualities: phDiagramData.qualityLines?.qualities || []
-            };
-        } else {
-            console.warn('No P-H diagram data, generating accurate saturation dome with CoolProp');
-            // Generate accurate saturation dome using CoolProp with proper unit conversions
-            const refrigerant = chillerInputs.refrigerant;
-            const liquidEnthalpy: number[] = [];
-            const vaporEnthalpy: number[] = [];
-            const pressures: number[] = [];
-            
-            // Generate saturation dome from triple point to critical point (typical range)
-            const tempRange = [-40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]; // °C
-            
-            tempRange.forEach(temp => {
-                try {
-                    // CRITICAL: Proper unit conversions following chiller analyzer pattern
-                    const pSat = window.Module.PropsSI('P', 'T', temp + 273.15, 'Q', 1, refrigerant); // Pa
-                    const hLiq = window.Module.PropsSI('H', 'T', temp + 273.15, 'Q', 0, refrigerant); // J/kg
-                    const hVap = window.Module.PropsSI('H', 'T', temp + 273.15, 'Q', 1, refrigerant); // J/kg
-                    
-                    // Convert to standard P-H diagram units
-                    pressures.push(pSat / 1e5); // Pa to bar
-                    liquidEnthalpy.push(hLiq / 1000); // J/kg to kJ/kg  
-                    vaporEnthalpy.push(hVap / 1000); // J/kg to kJ/kg
-                    
-                    console.log(`Saturation point ${temp}°C: P=${(pSat/1e5).toFixed(2)} bar, hL=${(hLiq/1000).toFixed(1)} kJ/kg, hV=${(hVap/1000).toFixed(1)} kJ/kg`);
-                } catch (e) {
-                    console.warn(`Failed to calculate saturation properties at ${temp}°C:`, e);
-                }
-            });
-            
-            saturationDome = { liquidEnthalpy, vaporEnthalpy, pressures };
-            qualityLines = { enthalpy: [], pressure: [], qualities: [] };
         }
 
-        console.log('Extracted P-H data from chiller analyzer:', {
-            saturationPoints: saturationDome.liquidEnthalpy.length,
-            oemCyclePoints: oemCycle.enthalpy.length,
-            actualCyclePoints: actualCycle.enthalpy.length,
-            optimizedCyclePoints: optimizedCycle.enthalpy.length,
-            qualityLinesCount: qualityLines.enthalpy.length
-        });
+        const enthalpy = cycleResults.points.map((point: any) => point.enthalpy || 0);
+        const pressure = cycleResults.points.map((point: any) => point.pressure || 0);
+
+        // Close the cycle
+        enthalpy.push(enthalpy[0]);
+        pressure.push(pressure[0]);
 
         return {
-            saturationDome,
-            oemCycle,
-            actualCycle,
-            optimizedCycle,
-            qualityLines,
-            chillerResults // Include full results for additional data
+            enthalpy,
+            pressure,
+            cop: cycleResults.cop
         };
+    };
 
-    } catch (error) {
-        console.error('Error in generateChillerAnalyzerPHData:', error);
-        throw error; // Re-throw to be caught by the calling useEffect
+    const oemCycle = extractCycleData(chillerResults.oem);
+    const actualCycle = extractCycleData(chillerResults.actual);
+    const optimizedCycle = extractCycleData(chillerResults.optimized);
+
+    // Extract saturation dome data from chiller analyzer P-H diagram data
+    const phDiagramData = chillerResults.phDiagramData;
+
+    const saturationDome = {
+        liquidEnthalpy: phDiagramData.saturatedLiquidEnthalpy || [],
+        vaporEnthalpy: phDiagramData.saturatedVaporEnthalpy || [],
+        pressures: phDiagramData.saturationPressure || []
+    };
+
+    // Extract quality lines if available
+    const qualityLines = {
+        enthalpy: phDiagramData.qualityLines?.enthalpy || [],
+        pressure: phDiagramData.qualityLines?.pressure || [],
+        qualities: phDiagramData.qualityLines?.qualities || []
+    };
+
+    console.log('Extracted P-H data from chiller analyzer:', {
+        saturationPoints: saturationDome.liquidEnthalpy.length,
+        oemCyclePoints: oemCycle.enthalpy.length,
+        actualCyclePoints: actualCycle.enthalpy.length,
+        optimizedCyclePoints: optimizedCycle.enthalpy.length,
+        qualityLinesCount: qualityLines.enthalpy.length
+    });
+
+    return {
+        saturationDome,
+        oemCycle,
+        actualCycle,
+        optimizedCycle,
+        qualityLines,
+        chillerResults // Include full results for additional data
     };
 };
 
@@ -234,83 +167,47 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
     const [isCalculating, setIsCalculating] = useState(false);
     const [calculationTriggered, setCalculationTriggered] = useState(false);
 
-    // Load CoolProp safely - Use existing instance if available
+    // Load CoolProp safely
     useEffect(() => {
         const loadCoolProp = async () => {
             try {
-                // Check if already loaded and ready
+                // Check if already loaded
                 if (window.Module && typeof window.Module.PropsSI === 'function') {
-                    console.log('CoolProp already loaded and ready');
                     setCoolPropReady(true);
                     return;
                 }
 
-                console.log('CoolProp not ready, starting load process...');
-
-                // Configure CoolProp module if not already configured
+                // Configure CoolProp module
                 if (!window.Module) {
                     window.Module = {
-                        locateFile: function(path: string) {
-                            if (path.endsWith('.wasm')) {
-                                return '/coolprop.wasm';
-                            }
-                            return path;
-                        },
-                        onRuntimeInitialized: function() {
-                            console.log('CoolProp WASM module initialized for proposal');
+                        locateFile: (path: string) => path.endsWith('.wasm') ? '/coolprop.wasm' : path,
+                        onRuntimeInitialized: () => {
+                            console.log('CoolProp initialized');
                             setCoolPropReady(true);
-                        },
-                        print: function(text: string) {
-                            console.log('CoolProp stdout:', text);
-                        },
-                        printErr: function(text: string) {
-                            console.error('CoolProp stderr:', text);
                         }
                     };
                 }
 
-                // Check if script already exists
-                const existingScript = document.querySelector('script[src*="coolprop"]');
-                if (!existingScript) {
-                    console.log('Loading CoolProp script...');
+                // Load CoolProp script if not already loaded
+                if (!document.querySelector('script[src*="coolprop"]')) {
                     const script = document.createElement('script');
                     script.src = '/coolprop.js';
                     script.onload = () => {
-                        console.log('CoolProp script loaded, waiting for initialization...');
-                        // Wait for initialization with longer timeout
-                        const checkReady = (attempts = 0) => {
+                        // Wait for initialization
+                        const checkReady = () => {
                             if (window.Module && typeof window.Module.PropsSI === 'function') {
-                                console.log('CoolProp ready after', attempts, 'attempts');
                                 setCoolPropReady(true);
-                            } else if (attempts < 100) { // 10 second timeout
-                                setTimeout(() => checkReady(attempts + 1), 100);
                             } else {
-                                console.error('CoolProp initialization timeout');
-                                setCoolPropReady(false);
+                                setTimeout(checkReady, 100);
                             }
                         };
                         checkReady();
                     };
                     script.onerror = () => {
-                        console.error('Failed to load CoolProp script');
+                        console.error('Failed to load CoolProp');
                         setCoolPropReady(false);
                     };
                     document.head.appendChild(script);
-                } else {
-                    console.log('CoolProp script already exists, polling for readiness...');
-                    // Script exists, poll for initialization with longer timeout
-                    const checkReady = (attempts = 0) => {
-                        if (window.Module && typeof window.Module.PropsSI === 'function') {
-                            console.log('CoolProp ready (existing script) after', attempts, 'attempts');
-                            setCoolPropReady(true);
-                        } else if (attempts < 100) { // 10 second timeout
-                            setTimeout(() => checkReady(attempts + 1), 100);
-                        } else {
-                            console.warn('CoolProp still not ready, continuing with fallback');
-                            setCoolPropReady(false);
-                        }
-                    };
-                    checkReady();
                 }
             } catch (error) {
                 console.error('CoolProp loading error:', error);
@@ -332,7 +229,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
                     console.log('Generating P-H data using chiller analyzer calculations...');
                     
                     // Small delay to show loading state
-                    await new Promise(resolve => setTimeout(resolve, 300));
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     
                     const data_result = await generateChillerAnalyzerPHData(data);
                     setPhData(data_result);
@@ -343,36 +240,16 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
                     console.error('❌ Error generating P-H data with chiller analyzer:', error);
                     setIsCalculating(false);
                     
-                    // Use comprehensive fallback data
-                    console.log('Using fallback P-H data for proposal');
+                    // Use fallback data
                     setPhData({
                         saturationDome: {
-                            liquidEnthalpy: [173, 183, 194, 205, 216, 227, 239, 251, 263, 275, 288, 301, 315, 330],
-                            vaporEnthalpy: [387, 392, 397, 402, 407, 411, 416, 420, 424, 427, 431, 434, 437, 439],
-                            pressures: [0.5, 0.8, 1.3, 2.0, 2.9, 4.1, 5.7, 7.7, 10.2, 13.2, 16.8, 21.2, 26.5, 32.6]
+                            liquidEnthalpy: [173, 183, 194, 205, 216, 227, 239, 251, 263, 275, 288],
+                            vaporEnthalpy: [387, 392, 397, 402, 407, 411, 416, 420, 424, 427, 431],
+                            pressures: [0.5, 0.8, 1.3, 2.0, 2.9, 4.1, 5.7, 7.7, 10.2, 13.2, 16.8]
                         },
-                        oemCycle: { 
-                            enthalpy: [248, 278, 242, 242, 248], 
-                            pressure: [3.08, 11.85, 11.85, 3.08, 3.08], 
-                            cop: 2.87 
-                        },
-                        actualCycle: { 
-                            enthalpy: [251, 286, 246, 246, 251], 
-                            pressure: [3.08, 12.44, 12.44, 3.08, 3.08], 
-                            cop: 2.60 
-                        },
-                        optimizedCycle: { 
-                            enthalpy: [248, 272, 238, 238, 248], 
-                            pressure: [3.08, 8.15, 8.15, 3.08, 3.08], 
-                            cop: 4.30 
-                        },
-                        qualityLines: { enthalpy: [], pressure: [], qualities: [] },
-                        chillerResults: {
-                            oem: { cop: 2.87 },
-                            actual: { cop: 2.60 },
-                            optimized: { cop: 4.30, energySavings: 27.0 },
-                            degradationZone: { area: 245.5, energyWaste: 18.4 }
-                        }
+                        oemCycle: { enthalpy: [248, 278, 242, 242, 248], pressure: [3.08, 11.85, 11.85, 3.08, 3.08], cop: 2.87 },
+                        actualCycle: { enthalpy: [251, 286, 246, 246, 251], pressure: [3.08, 12.44, 12.44, 3.08, 3.08], cop: 2.60 },
+                        optimizedCycle: { enthalpy: [248, 272, 238, 238, 248], pressure: [3.08, 8.15, 8.15, 3.08, 3.08], cop: 4.30 }
                     });
                 }
             };
@@ -381,7 +258,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
         }
     }, [coolPropReady, shouldCalculate, calculationTriggered, data]);
 
-    // Reset calculation trigger when data changes significantly (but not shouldCalculate)
+    // Reset calculation trigger when data changes significantly
     useEffect(() => {
         setCalculationTriggered(false);
         setPhData(null);
@@ -533,7 +410,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
                     mode: 'lines',
                     type: 'scatter',
                     name: `x=${phData.qualityLines.qualities[index]}`,
-                    line: { color: 'purple', width: 1 }, // removed dash property for TypeScript compatibility
+                    line: { color: 'purple', width: 1, dash: 'dashdot' },
                     showlegend: false,
                     hovertemplate: `Quality x=${phData.qualityLines.qualities[index]}<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>`
                 });
@@ -564,7 +441,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             line: { color: 'rgba(231, 76, 60, 0.3)', width: 1 },
             hovertemplate: 'Degradation Zone<br>Performance Loss Area<extra></extra>',
             showlegend: false
-        } as any);
+        });
     }
 
     // Add refrigeration cycles
@@ -585,7 +462,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             },
             hovertemplate: 'OEM Design<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>',
             showlegend: true
-        } as any,
+        },
 
         // Actual Operation Cycle
         {
@@ -603,7 +480,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             },
             hovertemplate: 'Actual Operation<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>',
             showlegend: true
-        } as any,
+        },
 
         // Optimized Solution Cycle
         {
@@ -621,7 +498,7 @@ export const PHChart: React.FC<PHChartProps> = ({ data, colors, shouldCalculate 
             },
             hovertemplate: 'Optimized Solution<br>h: %{x:.1f} kJ/kg<br>P: %{y:.2f} bar<extra></extra>',
             showlegend: true
-        } as any
+        }
     );
 
     // Calculate autoscaling from cycle data

@@ -99,7 +99,7 @@ export default function ChillerAnalyzer() {
             }
             
             const script = document.createElement('script');
-            script.src = 'https://cdn.plot.ly/plotly-3.0.3.min.js';
+            script.src = 'https://cdn.plot.ly/plotly-3.0.1.min.js';
             script.onload = () => {
               setPlotlyReady(true);
               resolve();
