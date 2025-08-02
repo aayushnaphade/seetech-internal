@@ -648,23 +648,124 @@ function EnergySavingsAndFinancialAnalysisPage() {
   );
 }
 
-function LifeCycleCostAndROIPage() {
-  // Life cycle cost table data
-  const lccRows = [
-    { year: 0, cash: '-1,150,000', dcf: '-1,150,000', cdf: '-1,150,000', cdfColor: '#e74c3c' },
-    { year: 1, cash: '1,926,554', dcf: '1,783,847', cdf: '633,847', cdfColor: '#1db56c' },
-    { year: 2, cash: '2,003,616', dcf: '1,717,778', cdf: '2,351,625', cdfColor: '#1db56c' },
-    { year: 3, cash: '2,083,761', dcf: '1,654,157', cdf: '4,005,781', cdfColor: '#1db56c' },
-    { year: 5, cash: '2,253,796', dcf: '1,533,896', cdf: '7,132,569', cdfColor: '#1db56c' },
-    { year: 10, cash: '2,742,087', dcf: '1,270,117', cdf: '13,990,813', cdfColor: '#1db56c' },
-    { year: 15, cash: '3,336,169', dcf: '1,051,699', cdf: '19,669,670', cdfColor: '#1db56c' },
-  ];
-
-  // ROI line chart data
-  const roiYears = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  const roiCDF = [0, 633847, 2351625, 4005781, 5710000, 7132569, 9000000, 12000000, 19669670];
-  const breakEvenYear = 0.64;
-  const breakEvenValue = 0;
+function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
+  // Calculate financial metrics from proposal data
+  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
+  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
+  const operatingHours = parseFloat(data.operatingHours) || 8760;
+  const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
+  const electricityRate = parseFloat(data.electricityTariff || "8.5");
+  const waterRate = parseFloat(data.waterTariff || "25.0");
+  const waterConsumption = parseFloat(data.waterConsumption || "1200");
+  const projectLifespan = parseFloat(data.projectLifespan || "15");
+  
+  const powerSaving = currentPower - proposedPower;
+  const annualEnergySaving = powerSaving * operatingHours;
+  const annualElectricitySavings = annualEnergySaving * electricityRate;
+  const annualWaterCost = waterConsumption * waterRate;
+  
+  // Calculate annual maintenance cost based on selected type
+  let annualMaintenanceCost = 0;
+  const maintenanceType = data.maintenanceCostType || 'percentage';
+  
+  switch (maintenanceType) {
+    case 'percentage':
+      const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
+      annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
+      break;
+    case 'static':
+      annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
+      break;
+    case 'monthly':
+      const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
+      annualMaintenanceCost = monthlyCost * 12;
+      break;
+    case 'yearly':
+      annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
+      break;
+    case 'onetime':
+      // For one-time cost, amortize over project lifespan
+      const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
+      annualMaintenanceCost = onetimeCost / projectLifespan;
+      break;
+    default:
+      annualMaintenanceCost = 0;
+  }
+  
+  const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
+  
+  // Calculate discount rate (8%) and inflation rate (4%)
+  const discountRate = 0.08;
+  const inflationRate = 0.04;
+  
+  // Generate life cycle cost data
+  const lccRows = [];
+  let cumulativeDCF = 0;
+  
+  // Year 0 - Initial investment
+  lccRows.push({
+    year: 0,
+    cash: (-investmentCost).toLocaleString('en-IN'),
+    dcf: (-investmentCost).toLocaleString('en-IN'),
+    cdf: (-investmentCost).toLocaleString('en-IN'),
+    cdfColor: '#e74c3c'
+  });
+  cumulativeDCF = -investmentCost;
+  
+  // Years 1-15 - Annual cash flows
+  for (let year = 1; year <= projectLifespan; year++) {
+    // Apply inflation to cash flows
+    const inflatedCashFlow = netAnnualSavings * Math.pow(1 + inflationRate, year - 1);
+    
+    // Calculate discounted cash flow
+    const discountedCashFlow = inflatedCashFlow / Math.pow(1 + discountRate, year);
+    
+    // Update cumulative discounted cash flow
+    cumulativeDCF += discountedCashFlow;
+    
+    // Add to table for key years
+    if ([1, 2, 3, 5, 10, 15].includes(year)) {
+      lccRows.push({
+        year,
+        cash: inflatedCashFlow.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
+        dcf: discountedCashFlow.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
+        cdf: cumulativeDCF.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
+        cdfColor: cumulativeDCF > 0 ? '#1db56c' : '#e74c3c'
+      });
+    }
+  }
+  
+  // Calculate break-even point
+  let breakEvenYear = 0;
+  let runningCashFlow = -investmentCost;
+  
+  for (let month = 1; month <= projectLifespan * 12; month++) {
+    const monthlyInflatedCashFlow = (netAnnualSavings * Math.pow(1 + inflationRate, Math.floor((month - 1) / 12))) / 12;
+    runningCashFlow += monthlyInflatedCashFlow;
+    
+    if (runningCashFlow >= 0 && breakEvenYear === 0) {
+      breakEvenYear = month / 12;
+      break;
+    }
+  }
+  
+  // Generate ROI chart data
+  const roiYears = [];
+  const roiCDF = [];
+  let chartCumulativeDCF = -investmentCost;
+  
+  roiYears.push(0);
+  roiCDF.push(chartCumulativeDCF);
+  
+  for (let year = 1; year <= Math.min(15, projectLifespan); year++) {
+    const inflatedCashFlow = netAnnualSavings * Math.pow(1 + inflationRate, year - 1);
+    const discountedCashFlow = inflatedCashFlow / Math.pow(1 + discountRate, year);
+    chartCumulativeDCF += discountedCashFlow;
+    
+    roiYears.push(year);
+    roiCDF.push(chartCumulativeDCF);
+  }
+  
   const roiData = [
     {
       x: roiYears,
@@ -676,16 +777,17 @@ function LifeCycleCostAndROIPage() {
     },
     {
       x: [breakEvenYear],
-      y: [breakEvenValue],
+      y: [0],
       mode: 'markers+text',
-      name: 'Break-even: 0.64 Years',
+      name: `Break-even: ${breakEvenYear.toFixed(1)} Years`,
       marker: { color: '#1db56c', size: 16, symbol: 'star' },
-      text: ['Break-even: 0.64 Years'],
+      text: [`Break-even: ${breakEvenYear.toFixed(1)} Years`],
       textposition: 'top right',
       textfont: { size: 13, color: '#1db56c' },
       showlegend: false,
     },
   ];
+  
   const roiLayout = {
     title: {
       text: 'Return on Investment Timeline',
@@ -704,13 +806,14 @@ function LifeCycleCostAndROIPage() {
       title: 'Cumulative Discounted Cash Flow (₹)',
       tickfont: { size: 12 },
       titlefont: { size: 13 },
+      tickformat: '.0s',
       zeroline: true,
       showgrid: true,
       gridcolor: '#eaf3f7',
     },
     height: 260,
     width: 520,
-    margin: { l: 60, r: 30, t: 50, b: 50 },
+    margin: { l: 80, r: 30, t: 50, b: 50 },
     plot_bgcolor: colors.white,
     paper_bgcolor: colors.white,
     font: { family: 'Inter, Arial, sans-serif', size: 13, color: colors.text },
@@ -745,7 +848,7 @@ function LifeCycleCostAndROIPage() {
             </table>
           </div>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 24, lineHeight: 1.7 }}>
-        The Net Present Value (NPV) of this project over 15 years is <b style={{ color: colors.primaryBlue }}>₹1,96,69,669.56 (1.97 Cr)</b>, with a discount rate of 8% and inflation rate of 4%.
+        The Net Present Value (NPV) of this project over {projectLifespan} years is <b style={{ color: colors.primaryBlue }}>₹{Math.abs(cumulativeDCF).toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({(Math.abs(cumulativeDCF) / 10000000).toFixed(2)} Cr)</b>, with a discount rate of 8% and inflation rate of 4%.
       </div>
       {/* 4.3 Return on Investment Analysis */}
       <h3 style={{ ...typography.section, fontSize: 16, marginTop: 32, marginBottom: 8, color: colors.primaryBlue }}>4.3 Return on Investment Analysis</h3>
@@ -1339,7 +1442,7 @@ export default function ChillerReportTemplate({ data }: ChillerReportTemplatePro
       <div className="page-break"></div>
       <EnergySavingsAndFinancialAnalysisPage />
       <div className="page-break"></div>
-      <LifeCycleCostAndROIPage />
+      <LifeCycleCostAndROIPage data={data} />
       <div className="page-break"></div>
       <EnvironmentalImpactPage />
       <div className="page-break"></div>

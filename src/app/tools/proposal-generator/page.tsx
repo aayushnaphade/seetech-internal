@@ -150,7 +150,8 @@ export default function ProposalGeneratorPage() {
     waterTariff: "25.0",
     maintenanceCostType: "percentage",
     maintenanceCostPercent: "2.0",
-    waterConsumption: "1200",
+    chillerFanCFM: "300000", // CFM for chiller fan
+    waterConsumption: String((300000 * 4 / 1000 * 8760) / 1000), // Auto-calculated from CFM
     projectLifespan: "15",
     paybackPeriod: "Auto-calculated",
     roi: "Auto-calculated"
@@ -177,7 +178,8 @@ export default function ProposalGeneratorPage() {
       waterTariff: "25.0", // ₹/kL
       maintenanceCostType: "percentage" as const, // Default maintenance cost type
       maintenanceCostPercent: "2.0", // % of investment
-      waterConsumption: "1200", // kL/year
+      chillerFanCFM: "300000", // CFM for chiller fan
+      waterConsumption: "1200", // kL/year (auto-calculated from CFM)
       projectLifespan: "15", // years
       paybackPeriod: "Auto-calculated", // Will be calculated
       roi: "Auto-calculated", // Will be calculated
@@ -225,11 +227,28 @@ export default function ProposalGeneratorPage() {
     }
   });
 
+  // Function to calculate water consumption from CFM using thumb rule: 4 liters per 1000 CFM
+  const calculateWaterConsumption = (cfm: string): string => {
+    const cfmValue = parseFloat(cfm) || 0;
+    // Thumb rule: 4 liters per 1000 CFM
+    // Convert to kL/year: (CFM * 4 / 1000) * hours_per_year / 1000
+    // Assuming continuous operation: 8760 hours/year
+    const litersPerHour = (cfmValue * 4) / 1000;
+    const litersPerYear = litersPerHour * 8760;
+    const kLPerYear = litersPerYear / 1000;
+    return kLPerYear.toFixed(0);
+  };
+
   const handleInputChange = (field: string, value: string) => {
     const updatedData = {
       ...chillerData,
       [field]: value
     };
+    
+    // Auto-calculate water consumption when CFM changes
+    if (field === 'chillerFanCFM') {
+      updatedData.waterConsumption = calculateWaterConsumption(value);
+    }
     
     // Auto-calculate financial metrics when relevant fields change
     const financialFields = [
@@ -237,7 +256,7 @@ export default function ProposalGeneratorPage() {
       'investmentCost', 'electricityTariff', 'waterTariff', 'waterConsumption', 
       'projectLifespan', 'maintenanceCostType', 'maintenanceCostPercent', 
       'maintenanceCostStatic', 'maintenanceCostMonthly', 'maintenanceCostYearly', 
-      'maintenanceCostOnetime'
+      'maintenanceCostOnetime', 'chillerFanCFM'
     ];
     
     if (financialFields.includes(field)) {
@@ -575,33 +594,209 @@ export default function ProposalGeneratorPage() {
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="maintenanceCostPercent">Maintenance Cost (% of Investment)</Label>
-                        <Input
-                          id="maintenanceCostPercent"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="10"
-                          value={chillerData.maintenanceCostPercent || "2.0"}
-                          onChange={(e) => handleInputChange("maintenanceCostPercent", e.target.value)}
-                          placeholder="e.g., 2.0"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="maintenanceCostType">Maintenance Cost Type</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Choose how you want to specify maintenance costs:<br/>
+                                • Percentage: As % of initial investment<br/>
+                                • Static: Fixed annual amount<br/>
+                                • Monthly: Monthly cost (×12 for annual)<br/>
+                                • Yearly: Direct annual cost<br/>
+                                • One-time: One-time cost (amortized)</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <Select 
+                          value={chillerData.maintenanceCostType || "percentage"} 
+                          onValueChange={(value) => handleInputChange("maintenanceCostType", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select maintenance cost type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">
+                              <div className="flex items-center gap-2">
+                                <span>💰</span>
+                                <span>Percentage of Investment</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="static">
+                              <div className="flex items-center gap-2">
+                                <span>📊</span>
+                                <span>Static Annual Amount</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="monthly">
+                              <div className="flex items-center gap-2">
+                                <span>📅</span>
+                                <span>Monthly Amount</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="yearly">
+                              <div className="flex items-center gap-2">
+                                <span>🗓️</span>
+                                <span>Yearly Amount</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="onetime">
+                              <div className="flex items-center gap-2">
+                                <span>⚡</span>
+                                <span>One-time Cost</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                         <p className="text-sm text-muted-foreground">
-                          Annual maintenance as % of initial investment
+                          Choose how you want to specify maintenance costs
                         </p>
                       </div>
                     </div>
 
+                    {/* Dynamic maintenance cost input based on selected type */}
+                    <div className="space-y-2">
+                      {chillerData.maintenanceCostType === "percentage" && (
+                        <>
+                          <Label htmlFor="maintenanceCostPercent">Maintenance Cost (% of Investment)</Label>
+                          <Input
+                            id="maintenanceCostPercent"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={chillerData.maintenanceCostPercent || "2.0"}
+                            onChange={(e) => handleInputChange("maintenanceCostPercent", e.target.value)}
+                            placeholder="e.g., 2.0"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Typical range: 1.5% - 3% of investment cost
+                          </p>
+                        </>
+                      )}
+
+                      {chillerData.maintenanceCostType === "static" && (
+                        <>
+                          <Label htmlFor="maintenanceCostStatic">Annual Maintenance Cost (₹)</Label>
+                          <Input
+                            id="maintenanceCostStatic"
+                            type="number"
+                            min="0"
+                            value={chillerData.maintenanceCostStatic || ""}
+                            onChange={(e) => handleInputChange("maintenanceCostStatic", e.target.value)}
+                            placeholder="e.g., 50000"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Fixed annual maintenance cost in rupees
+                          </p>
+                        </>
+                      )}
+
+                      {chillerData.maintenanceCostType === "monthly" && (
+                        <>
+                          <Label htmlFor="maintenanceCostMonthly">Monthly Maintenance Cost (₹)</Label>
+                          <Input
+                            id="maintenanceCostMonthly"
+                            type="number"
+                            min="0"
+                            value={chillerData.maintenanceCostMonthly || ""}
+                            onChange={(e) => handleInputChange("maintenanceCostMonthly", e.target.value)}
+                            placeholder="e.g., 4000"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Will be multiplied by 12 for annual cost calculation
+                          </p>
+                        </>
+                      )}
+
+                      {chillerData.maintenanceCostType === "yearly" && (
+                        <>
+                          <Label htmlFor="maintenanceCostYearly">Yearly Maintenance Cost (₹)</Label>
+                          <Input
+                            id="maintenanceCostYearly"
+                            type="number"
+                            min="0"
+                            value={chillerData.maintenanceCostYearly || ""}
+                            onChange={(e) => handleInputChange("maintenanceCostYearly", e.target.value)}
+                            placeholder="e.g., 48000"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Direct annual maintenance cost in rupees
+                          </p>
+                        </>
+                      )}
+
+                      {chillerData.maintenanceCostType === "onetime" && (
+                        <>
+                          <Label htmlFor="maintenanceCostOnetime">One-time Maintenance Cost (₹)</Label>
+                          <Input
+                            id="maintenanceCostOnetime"
+                            type="number"
+                            min="0"
+                            value={chillerData.maintenanceCostOnetime || ""}
+                            onChange={(e) => handleInputChange("maintenanceCostOnetime", e.target.value)}
+                            placeholder="e.g., 100000"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Will be amortized over project lifespan for annual calculation
+                          </p>
+                        </>
+                      )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="waterConsumption">Water Consumption (kL/year)</Label>
+                        <Label htmlFor="chillerFanCFM" className="text-sm font-medium">
+                          Chiller Fan CFM
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 ml-1 inline" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cubic Feet per Minute - used to calculate water consumption</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </Label>
+                        <Input
+                          id="chillerFanCFM"
+                          type="number"
+                          value={chillerData.chillerFanCFM || "300000"}
+                          onChange={(e) => handleInputChange("chillerFanCFM", e.target.value)}
+                          placeholder="e.g., 300000"
+                          className="bg-white/50"
+                        />
+                        <p className="text-xs text-orange-600">
+                          Used to auto-calculate water consumption
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="waterConsumption" className="text-sm font-medium">
+                          Water Consumption (kL/year)
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 ml-1 inline" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Auto-calculated: 4 liters per 1000 CFM × 8760 hours</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </Label>
                         <Input
                           id="waterConsumption"
                           type="number"
                           value={chillerData.waterConsumption || "1200"}
                           onChange={(e) => handleInputChange("waterConsumption", e.target.value)}
                           placeholder="e.g., 1200"
+                          className="bg-gray-100"
+                          readOnly
                         />
+                        <p className="text-xs text-blue-600">
+                          Auto-calculated from CFM using thumb rule
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="projectLifespan">Project Lifespan (years)</Label>
@@ -618,19 +813,41 @@ export default function ProposalGeneratorPage() {
                     </div>
 
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold text-blue-900 mb-2">Automatically Calculated</h4>
+                      <h4 className="font-semibold text-blue-900 mb-2">Financial Metrics (Real-time)</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-blue-700">Payback Period:</span>
-                          <div className="font-mono text-lg text-green-600">Auto-calculated</div>
+                          <div className="font-mono text-lg text-green-600">{chillerData.paybackPeriod}</div>
                         </div>
                         <div>
                           <span className="text-blue-700">ROI:</span>
-                          <div className="font-mono text-lg text-green-600">Auto-calculated</div>
+                          <div className="font-mono text-lg text-green-600">{chillerData.roi}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-blue-200">
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                          <div>
+                            <span className="text-blue-600">Annual Maintenance:</span>
+                            <div className="font-mono text-sm">
+                              ₹{(() => {
+                                const metrics = calculateFinancialMetrics(chillerData);
+                                return (metrics.annualMaintenanceCost || 0).toLocaleString('en-IN');
+                              })()}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-green-600">Net Annual Savings:</span>
+                            <div className="font-mono text-sm">
+                              ₹{(() => {
+                                const metrics = calculateFinancialMetrics(chillerData);
+                                return (metrics.netAnnualSavings || 0).toLocaleString('en-IN');
+                              })()}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="text-xs text-gray-600 mt-2">
-                        <strong>Note:</strong> Payback period and ROI are automatically calculated based on your inputs
+                        <strong>Note:</strong> All financial metrics are calculated in real-time based on your inputs
                       </div>
                     </div>
                   </CardContent>
@@ -963,7 +1180,7 @@ export default function ProposalGeneratorPage() {
 
             <TabsContent value="proposal" className="space-y-6">
               <div ref={proposalRef}>
-                <ChillerReportTemplate data={chillerData} shouldCalculate={true} />
+                <ChillerReportTemplate data={chillerData} />
               </div>
 
               <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
