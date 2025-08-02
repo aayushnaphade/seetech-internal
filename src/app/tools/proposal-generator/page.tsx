@@ -88,7 +88,7 @@ export default function ProposalGeneratorPage() {
         if (!window.Plotly) {
           console.log('Loading Plotly library...');
           const plotlyScript = document.createElement('script');
-          plotlyScript.src = 'https://cdn.plot.ly/plotly-latest.min.js';
+          plotlyScript.src = 'https://cdn.plot.ly/plotly-3.0.3.min.js';
           plotlyScript.onload = () => {
             console.log('Plotly script loaded for proposal generator');
             // Force re-check in child components
