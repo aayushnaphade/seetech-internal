@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -426,58 +427,53 @@ export default function ProposalGeneratorPage() {
 
             <TabsContent value="inputs" className="space-y-4">
               <div className="grid gap-6 lg:grid-cols-2">
-                {/* Compact Client Information Card */}
-                <Card className="h-fit">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Client Information</CardTitle>
-                    <CardDescription className="text-sm">
+                {/* Input Form */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Client Information</CardTitle>
+                    <CardDescription>
                       Enter the client and project details
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label htmlFor="clientName" className="text-sm">Client Name</Label>
-                        <Input
-                          id="clientName"
-                          value={chillerData.clientName}
-                          onChange={(e) => handleInputChange("clientName", e.target.value)}
-                          placeholder="e.g., Ashirwad Pipes"
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="projectName" className="text-sm">Project Name</Label>
-                        <Input
-                          id="projectName"
-                          value={chillerData.projectName}
-                          onChange={(e) => handleInputChange("projectName", e.target.value)}
-                          placeholder="e.g., Chiller Optimization"
-                          className="h-9"
-                        />
-                      </div>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientName">Client Name</Label>
+                      <Input
+                        id="clientName"
+                        value={chillerData.clientName}
+                        onChange={(e) => handleInputChange("clientName", e.target.value)}
+                        placeholder="e.g., Ashirwad Pipes"
+                      />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="clientLocation" className="text-sm">Location</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="clientLocation">Location</Label>
                       <Textarea
                         id="clientLocation"
                         value={chillerData.location}
                         onChange={(e) => handleInputChange("location", e.target.value)}
                         placeholder="Enter client location"
-                        rows={2}
-                        className="resize-none text-sm"
+                        rows={3}
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="projectDate" className="text-sm">Project Date</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="projectName">Project Name</Label>
+                      <Input
+                        id="projectName"
+                        value={chillerData.projectName}
+                        onChange={(e) => handleInputChange("projectName", e.target.value)}
+                        placeholder="e.g., Chiller Optimization Project"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="projectDate">Project Date</Label>
                       <Input
                         id="projectDate"
                         type="date"
                         value={chillerData.date}
                         onChange={(e) => handleInputChange("date", e.target.value)}
-                        className="h-9"
                       />
                     </div>
                   </CardContent>
@@ -550,35 +546,25 @@ export default function ProposalGeneratorPage() {
                                 <Info className="h-4 w-4 text-gray-400 cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Choose calculation method:<br/>
-                                • Manual: Uses percentage saving input<br/>
-                                • Automatic: Uses thermodynamic analysis with P-H charts</p>
+                                <p>Toggle between calculation methods:<br/>
+                                • OFF: Manual percentage input<br/>
+                                • ON: Automatic thermodynamic analysis with P-H charts</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        
-                        {/* Toggle Switch */}
-                        <div className="flex items-center space-x-3">
-                          <span className={`text-sm font-medium ${chillerData.calculationMode === "manual" ? "text-blue-600" : "text-gray-500"}`}>
-                            📝 Manual
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleInputChange("calculationMode", chillerData.calculationMode === "manual" ? "automatic" : "manual")}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                              chillerData.calculationMode === "automatic" ? "bg-blue-600" : "bg-gray-200"
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                chillerData.calculationMode === "automatic" ? "translate-x-6" : "translate-x-1"
-                              }`}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">📝 Manual</span>
+                            <Switch
+                              id="calculationMode"
+                              checked={chillerData.calculationMode === "automatic"}
+                              onCheckedChange={(checked) => 
+                                handleInputChange("calculationMode", checked ? "automatic" : "manual")
+                              }
                             />
-                          </button>
-                          <span className={`text-sm font-medium ${chillerData.calculationMode === "automatic" ? "text-blue-600" : "text-gray-500"}`}>
-                            🔬 Automatic
-                          </span>
+                            <span className="text-sm text-gray-600">� Automatic</span>
+                          </div>
                         </div>
                       </div>
                       
