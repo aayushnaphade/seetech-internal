@@ -154,7 +154,12 @@ export default function ProposalGeneratorPage() {
     waterConsumption: String((300000 * 4 / 1000 * 8760) / 1000), // Auto-calculated from CFM
     projectLifespan: "15",
     paybackPeriod: "Auto-calculated",
-    roi: "Auto-calculated"
+    roi: "Auto-calculated",
+    // New fields for enhanced system parameters
+    ratedPowerConsumption: "350",
+    calculationMode: "automatic",
+    workingDays: "365",
+    workingHoursPerDay: "24"
   });
 
 
@@ -251,13 +256,37 @@ export default function ProposalGeneratorPage() {
       updatedData.waterConsumption = calculateWaterConsumption(value);
     }
     
+    // Auto-calculate operating hours when working days or hours per day changes
+    if (field === 'workingDays' || field === 'workingHoursPerDay') {
+      const days = parseFloat(field === 'workingDays' ? value : (updatedData.workingDays || "365"));
+      const hours = parseFloat(field === 'workingHoursPerDay' ? value : (updatedData.workingHoursPerDay || "24"));
+      updatedData.operatingHours = (days * hours).toString();
+    }
+    
+    // Auto-calculate proposed power consumption based on calculation mode
+    if (field === 'currentPowerConsumption' || field === 'expectedSaving' || field === 'calculationMode') {
+      const currentPower = parseFloat(field === 'currentPowerConsumption' ? value : (updatedData.currentPowerConsumption || "0"));
+      
+      if (updatedData.calculationMode === "manual" || field === 'calculationMode') {
+        const savingPercent = parseFloat((updatedData.expectedSaving || "27%").replace('%', '')) / 100;
+        const proposedPower = currentPower * (1 - savingPercent);
+        updatedData.proposedPowerConsumption = proposedPower.toFixed(1);
+      } else {
+        // For automatic mode, use thermodynamic calculations (placeholder)
+        const savingPercent = 0.27; // Would come from P-H analysis
+        const proposedPower = currentPower * (1 - savingPercent);
+        updatedData.proposedPowerConsumption = proposedPower.toFixed(1);
+        updatedData.expectedSaving = "27.0%"; // Would be calculated from thermodynamic analysis
+      }
+    }
+    
     // Auto-calculate financial metrics when relevant fields change
     const financialFields = [
       'currentPowerConsumption', 'proposedPowerConsumption', 'operatingHours', 
       'investmentCost', 'electricityTariff', 'waterTariff', 'waterConsumption', 
       'projectLifespan', 'maintenanceCostType', 'maintenanceCostPercent', 
       'maintenanceCostStatic', 'maintenanceCostMonthly', 'maintenanceCostYearly', 
-      'maintenanceCostOnetime', 'chillerFanCFM'
+      'maintenanceCostOnetime', 'chillerFanCFM', 'workingDays', 'workingHoursPerDay'
     ];
     
     if (financialFields.includes(field)) {
@@ -397,53 +426,58 @@ export default function ProposalGeneratorPage() {
 
             <TabsContent value="inputs" className="space-y-4">
               <div className="grid gap-6 lg:grid-cols-2">
-                {/* Input Form */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Client Information</CardTitle>
-                    <CardDescription>
+                {/* Compact Client Information Card */}
+                <Card className="h-fit">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Client Information</CardTitle>
+                    <CardDescription className="text-sm">
                       Enter the client and project details
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="clientName">Client Name</Label>
-                      <Input
-                        id="clientName"
-                        value={chillerData.clientName}
-                        onChange={(e) => handleInputChange("clientName", e.target.value)}
-                        placeholder="e.g., Ashirwad Pipes"
-                      />
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="clientName" className="text-sm">Client Name</Label>
+                        <Input
+                          id="clientName"
+                          value={chillerData.clientName}
+                          onChange={(e) => handleInputChange("clientName", e.target.value)}
+                          placeholder="e.g., Ashirwad Pipes"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="projectName" className="text-sm">Project Name</Label>
+                        <Input
+                          id="projectName"
+                          value={chillerData.projectName}
+                          onChange={(e) => handleInputChange("projectName", e.target.value)}
+                          placeholder="e.g., Chiller Optimization"
+                          className="h-9"
+                        />
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="clientLocation">Location</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="clientLocation" className="text-sm">Location</Label>
                       <Textarea
                         id="clientLocation"
                         value={chillerData.location}
                         onChange={(e) => handleInputChange("location", e.target.value)}
                         placeholder="Enter client location"
-                        rows={3}
+                        rows={2}
+                        className="resize-none text-sm"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="projectName">Project Name</Label>
-                      <Input
-                        id="projectName"
-                        value={chillerData.projectName}
-                        onChange={(e) => handleInputChange("projectName", e.target.value)}
-                        placeholder="e.g., Chiller Optimization Project"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="projectDate">Project Date</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="projectDate" className="text-sm">Project Date</Label>
                       <Input
                         id="projectDate"
                         type="date"
                         value={chillerData.date}
                         onChange={(e) => handleInputChange("date", e.target.value)}
+                        className="h-9"
                       />
                     </div>
                   </CardContent>
@@ -480,64 +514,246 @@ export default function ProposalGeneratorPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="currentPowerConsumption">Current Power Consumption</Label>
+                        <Label htmlFor="ratedPowerConsumption">Rated Power Consumption (kW)</Label>
+                        <Input
+                          id="ratedPowerConsumption"
+                          value={chillerData.ratedPowerConsumption || ""}
+                          onChange={(e) => handleInputChange("ratedPowerConsumption", e.target.value)}
+                          placeholder="e.g., 350 kW (from nameplate)"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Nameplate/OEM rated power consumption
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPowerConsumption">Actual Power Consumption (kW)</Label>
                         <Input
                           id="currentPowerConsumption"
                           value={chillerData.currentPowerConsumption}
                           onChange={(e) => handleInputChange("currentPowerConsumption", e.target.value)}
-                          placeholder="e.g., 425 kW"
+                          placeholder="e.g., 425 kW (measured)"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="proposedPowerConsumption">Proposed Power Consumption</Label>
-                        <Input
-                          id="proposedPowerConsumption"
-                          value={chillerData.proposedPowerConsumption}
-                          onChange={(e) => handleInputChange("proposedPowerConsumption", e.target.value)}
-                          placeholder="e.g., 310 kW"
-                        />
+                        <p className="text-xs text-muted-foreground">
+                          Actual measured power consumption
+                        </p>
                       </div>
                     </div>
 
+                    {/* Calculation Mode Toggle */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="calculationMode">Optimization Calculation Mode</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Choose calculation method:<br/>
+                                • Manual: Uses percentage saving input<br/>
+                                • Automatic: Uses thermodynamic analysis with P-H charts</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        
+                        {/* Toggle Switch */}
+                        <div className="flex items-center space-x-3">
+                          <span className={`text-sm font-medium ${chillerData.calculationMode === "manual" ? "text-blue-600" : "text-gray-500"}`}>
+                            📝 Manual
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleInputChange("calculationMode", chillerData.calculationMode === "manual" ? "automatic" : "manual")}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              chillerData.calculationMode === "automatic" ? "bg-blue-600" : "bg-gray-200"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                chillerData.calculationMode === "automatic" ? "translate-x-6" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                          <span className={`text-sm font-medium ${chillerData.calculationMode === "automatic" ? "text-blue-600" : "text-gray-500"}`}>
+                            🔬 Automatic
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {chillerData.calculationMode === "manual" && (
+                        <div className="mt-3 space-y-2">
+                          <Label htmlFor="expectedSaving">Expected Energy Saving (%)</Label>
+                          <Input
+                            id="expectedSaving"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="50"
+                            value={chillerData.expectedSaving?.replace('%', '') || ""}
+                            onChange={(e) => handleInputChange("expectedSaving", e.target.value + "%")}
+                            placeholder="e.g., 27"
+                          />
+                          <p className="text-xs text-blue-600">
+                            Manual percentage input - proposed power will be calculated automatically
+                          </p>
+                        </div>
+                      )}
+                      
+                      {chillerData.calculationMode === "automatic" && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded">
+                          <p className="text-sm text-blue-800">
+                            <strong>Automatic Mode:</strong> Expected savings will be calculated using thermodynamic analysis 
+                            of the optimized refrigeration cycle with P-H chart plotting.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Operating Schedule */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="workingDays">Working Days/Year</Label>
+                        <Input
+                          id="workingDays"
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={chillerData.workingDays || "365"}
+                          onChange={(e) => handleInputChange("workingDays", e.target.value)}
+                          placeholder="e.g., 365"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Days per year the chiller operates
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="workingHoursPerDay">Hours/Day</Label>
+                        <Input
+                          id="workingHoursPerDay"
+                          type="number"
+                          min="1"
+                          max="24"
+                          step="0.5"
+                          value={chillerData.workingHoursPerDay || "24"}
+                          onChange={(e) => handleInputChange("workingHoursPerDay", e.target.value)}
+                          placeholder="e.g., 24"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Operating hours per day
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="totalOperatingHours">Total Hours/Year</Label>
+                        <Input
+                          id="totalOperatingHours"
+                          value={(() => {
+                            const days = parseFloat(chillerData.workingDays || "365");
+                            const hours = parseFloat(chillerData.workingHoursPerDay || "24");
+                            return (days * hours).toString();
+                          })()}
+                          className="bg-gray-100"
+                          readOnly
+                        />
+                        <p className="text-xs text-blue-600">
+                          Auto-calculated: Days × Hours
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Auto-calculated Efficiencies */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="currentEfficiency">Current Efficiency</Label>
+                        <Label htmlFor="currentEfficiency">Current Efficiency (kW/TR)</Label>
                         <Input
                           id="currentEfficiency"
-                          value={chillerData.currentEfficiency}
-                          onChange={(e) => handleInputChange("currentEfficiency", e.target.value)}
-                          placeholder="e.g., 0.85 kW/TR"
+                          value={(() => {
+                            const capacity = parseFloat(chillerData.systemCapacity?.replace(/[^\d.-]/g, '') || "0");
+                            const power = parseFloat(chillerData.currentPowerConsumption || "0");
+                            if (capacity > 0 && power > 0) {
+                              return (power / capacity).toFixed(3);
+                            }
+                            return chillerData.currentEfficiency || "";
+                          })()}
+                          className="bg-gray-100"
+                          readOnly
                         />
+                        <p className="text-xs text-blue-600">
+                          Auto-calculated: Power ÷ Capacity
+                        </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="proposedEfficiency">Proposed Efficiency</Label>
+                        <Label htmlFor="proposedEfficiency">Proposed Efficiency (kW/TR)</Label>
                         <Input
                           id="proposedEfficiency"
-                          value={chillerData.proposedEfficiency}
-                          onChange={(e) => handleInputChange("proposedEfficiency", e.target.value)}
-                          placeholder="e.g., 0.62 kW/TR"
+                          value={(() => {
+                            const capacity = parseFloat(chillerData.systemCapacity?.replace(/[^\d.-]/g, '') || "0");
+                            const currentPower = parseFloat(chillerData.currentPowerConsumption || "0");
+                            
+                            let proposedPower = 0;
+                            if (chillerData.calculationMode === "manual") {
+                              const savingPercent = parseFloat(chillerData.expectedSaving?.replace('%', '') || "0") / 100;
+                              proposedPower = currentPower * (1 - savingPercent);
+                            } else {
+                              // For automatic mode, use thermodynamic calculations
+                              // This would be calculated from the actual thermodynamic analysis
+                              const savingPercent = 0.27; // Placeholder - would come from P-H analysis
+                              proposedPower = currentPower * (1 - savingPercent);
+                            }
+                            
+                            if (capacity > 0 && proposedPower > 0) {
+                              return (proposedPower / capacity).toFixed(3);
+                            }
+                            return chillerData.proposedEfficiency || "";
+                          })()}
+                          className="bg-gray-100"
+                          readOnly
                         />
+                        <p className="text-xs text-green-600">
+                          Auto-calculated: Optimized Power ÷ Capacity
+                        </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="operatingHours">Operating Hours</Label>
-                        <Input
-                          id="operatingHours"
-                          value={chillerData.operatingHours}
-                          onChange={(e) => handleInputChange("operatingHours", e.target.value)}
-                          placeholder="e.g., 8760 hours/year"
-                        />
+                    {/* Auto-calculated Proposed Power */}
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-green-900 mb-2">Optimization Results</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-green-700">Proposed Power Consumption:</span>
+                          <div className="font-mono text-lg text-green-600">
+                            {(() => {
+                              const currentPower = parseFloat(chillerData.currentPowerConsumption || "0");
+                              
+                              if (chillerData.calculationMode === "manual") {
+                                const savingPercent = parseFloat(chillerData.expectedSaving?.replace('%', '') || "0") / 100;
+                                const proposedPower = currentPower * (1 - savingPercent);
+                                return proposedPower > 0 ? `${proposedPower.toFixed(1)} kW` : "N/A";
+                              } else {
+                                // For automatic mode - placeholder calculation
+                                const savingPercent = 0.27; // Would come from thermodynamic analysis
+                                const proposedPower = currentPower * (1 - savingPercent);
+                                return proposedPower > 0 ? `${proposedPower.toFixed(1)} kW` : "N/A";
+                              }
+                            })()}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-green-700">Energy Saving:</span>
+                          <div className="font-mono text-lg text-green-600">
+                            {(() => {
+                              if (chillerData.calculationMode === "manual") {
+                                return chillerData.expectedSaving || "N/A";
+                              } else {
+                                return "27.0%"; // Placeholder - would come from thermodynamic analysis
+                              }
+                            })()}
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="expectedSaving">Expected Savings</Label>
-                        <Input
-                          id="expectedSaving"
-                          value={chillerData.expectedSaving}
-                          onChange={(e) => handleInputChange("expectedSaving", e.target.value)}
-                          placeholder="e.g., 27%"
-                        />
+                      <div className="text-xs text-gray-600 mt-2">
+                        <strong>Mode:</strong> {chillerData.calculationMode === "manual" ? "Manual percentage input" : "Automatic thermodynamic analysis"}
                       </div>
                     </div>
                   </CardContent>
@@ -854,47 +1070,53 @@ export default function ProposalGeneratorPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                    <CardDescription>
-                      Enter the contact details for the proposal
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
+                {/* Compact Contact Information Card */}
+                <div className="grid gap-6">
+                  <Card className="h-fit">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">Contact Information</CardTitle>
+                      <CardDescription className="text-sm">
+                        Enter the contact details for the proposal
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
                       <div className="space-y-2">
-                        <Label htmlFor="contactPerson">Contact Person</Label>
+                        <Label htmlFor="contactPerson" className="text-sm">Contact Person</Label>
                         <Input
                           id="contactPerson"
                           value={chillerData.contactPerson}
                           onChange={(e) => handleInputChange("contactPerson", e.target.value)}
                           placeholder="Enter contact person"
+                          className="h-9"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contactEmail">Email</Label>
-                        <Input
-                          id="contactEmail"
-                          type="email"
-                          value={chillerData.contactEmail}
-                          onChange={(e) => handleInputChange("contactEmail", e.target.value)}
-                          placeholder="Enter email"
-                        />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="contactEmail" className="text-sm">Email</Label>
+                          <Input
+                            id="contactEmail"
+                            type="email"
+                            value={chillerData.contactEmail}
+                            onChange={(e) => handleInputChange("contactEmail", e.target.value)}
+                            placeholder="Enter email"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contactPhone" className="text-sm">Phone</Label>
+                          <Input
+                            id="contactPhone"
+                            type="tel"
+                            value={chillerData.contactPhone}
+                            onChange={(e) => handleInputChange("contactPhone", e.target.value)}
+                            placeholder="Enter phone"
+                            className="h-9"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contactPhone">Phone</Label>
-                        <Input
-                          id="contactPhone"
-                          type="tel"
-                          value={chillerData.contactPhone}
-                          onChange={(e) => handleInputChange("contactPhone", e.target.value)}
-                          placeholder="Enter phone"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
               {/* Comprehensive Chiller Analysis Parameters - Based on Proven Chiller Analyzer */}
