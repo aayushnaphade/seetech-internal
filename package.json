@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+  "dev": "next dev",
+  "predev": "node scripts/generate-version.mjs",
     "dev:turbo": "next dev --turbopack",
-    "build": "next build",
+  "build": "next build",
+  "prebuild": "node scripts/generate-version.mjs",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:init": "tsx src/lib/db/init.ts"
+  "db:init": "tsx src/lib/db/init.ts",
+  "gen:version": "node scripts/generate-version.mjs"
+  ,"release:major": "npm version major && git push && git push --tags"
+  ,"release:minor": "npm version minor && git push && git push --tags"
+  ,"release:patch": "npm version patch && git push && git push --tags"
   },
   "dependencies": {
     "@libsql/client": "^0.15.10",

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from 'react';
+import buildInfo from '@/build-info';
 import ChillerReportTemplate from '@/components/templates/chiller-proposal/ChillerReportTemplate';
 import { ChillerProposalData, sampleChillerData } from '@/components/templates/chiller-proposal';
 import { Button } from '@/components/ui/button';
@@ -383,7 +384,10 @@ export default function ProposalGeneratorPage() {
             <div className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-semibold">Proposal Generator</h1>
-              <Badge variant="outline">v0.0.25</Badge>
+              <Badge variant="outline">{buildInfo.versionString}</Badge>
+              {buildInfo.isMajor && (
+                <Badge variant="destructive" className="animate-pulse">Major Update</Badge>
+              )}
             </div>
           </div>
           <div className="mt-2">
