@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChillerProposalData, CalculatedMetrics } from '../types';
 import { calculateMetrics, formatters } from '../utils/calculations';
+import { getSystemLabel } from '../utils/derived-calculations';
 import { MetricsTable } from './MetricsTable';
 
 // Standardized color scheme
@@ -30,7 +31,7 @@ interface ExecutiveSummaryPageProps {
 
 export const ExecutiveSummaryPage: React.FC<ExecutiveSummaryPageProps> = ({ data }) => {
   // Generate dynamic summary text based on input data
-  const generateSummaryText = (): JSX.Element => {
+  const generateSummaryText = () => {
     const clientName = data.clientName || 'Ashirwad Pipes';
     
     // Use DBT/WBT if available, otherwise fall back to condenser temps
@@ -47,9 +48,12 @@ export const ExecutiveSummaryPage: React.FC<ExecutiveSummaryPageProps> = ({ data
       ? `ambient temperature from ${currentTemp}°C (DBT) to ${optimizedTemp}°C (WBT)` 
       : `condenser temperature by ${tempReduction.toFixed(1)}°C (from ${currentTemp}°C to ${optimizedTemp}°C)`;
     
-    return (
+  const { base, capital } = getSystemLabel(data.systemType);
+  // Choose descriptor (e.g., air-cooled) only for chiller if user entered or default; skip for DX/VRF unless provided
+  const coolingDescriptor = base === 'chiller' ? 'air-cooled ' : '';
+  return (
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 18, lineHeight: 1.7 }}>
-        {clientName}'s <b>{systemCapacity} air-cooled chiller</b> currently operates with an average power consumption of <b>{currentPower} kW</b>. Our analysis using digital twin technology reveals an opportunity to substantially reduce energy consumption through <b>adiabatic cooling</b> technology.<br /><br />
+    {clientName}'s <b>{systemCapacity} {coolingDescriptor}{base}</b> currently operates with an average power consumption of <b>{currentPower} kW</b>. Our analysis using digital twin technology reveals an opportunity to substantially reduce energy consumption through <b>adiabatic cooling</b> technology.<br /><br />
         Our proposal recommends installing an <b>SEE-Tech Adiabatic Cooling System</b> to reduce <span style={{ fontWeight: 700, color: colors.primaryBlue }}>{tempDescription}</span>. This adiabatic cooling process utilizes evaporative cooling to lower the air temperature entering the condenser, effectively reducing the condensing temperature and improving system efficiency. Our digital twin technology has validated these projections through detailed simulation of your specific system, and our <b>IoT-enabled monitoring</b> will ensure continuous optimization and verification of savings.<br /><br />
         The implementation of this system is projected to deliver:
       </div>

@@ -468,7 +468,7 @@ export default function ProposalGeneratorPage() {
                         id="projectName"
                         value={chillerData.projectName}
                         onChange={(e) => handleInputChange("projectName", e.target.value)}
-                        placeholder="e.g., Chiller Optimization Project"
+                        placeholder={`e.g., ${chillerData.systemType === 'dx' ? 'DX' : chillerData.systemType === 'vrf' ? 'VRF' : 'Chiller'} Optimization Project`}
                       />
                     </div>
 
@@ -494,12 +494,12 @@ export default function ProposalGeneratorPage() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="systemCapacity">Chiller Capacity (TR)</Label>
+                        <Label htmlFor="systemCapacity">{chillerData.systemType === 'dx' ? 'DX System Capacity (TR)' : chillerData.systemType === 'vrf' ? 'VRF System Capacity (TR)' : 'Chiller Capacity (TR)'}</Label>
                         <Input
                           id="systemCapacity"
                           value={chillerData.systemCapacity}
                           onChange={(e) => handleInputChange("systemCapacity", e.target.value)}
-                          placeholder="e.g., 255 TR"
+                          placeholder={`e.g., ${chillerData.systemType === 'dx' ? '120 TR (multiple units)' : chillerData.systemType === 'vrf' ? '96 HP' : '255 TR'}`}
                         />
                       </div>
                       <div className="space-y-2">
@@ -528,27 +528,27 @@ export default function ProposalGeneratorPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="ratedPowerConsumption">Rated Power Consumption (kW)</Label>
+                        <Label htmlFor="ratedPowerConsumption">Rated {chillerData.systemType === 'dx' ? 'DX Power' : chillerData.systemType === 'vrf' ? 'VRF Power' : 'Power'} Consumption (kW)</Label>
                         <Input
                           id="ratedPowerConsumption"
                           value={chillerData.ratedPowerConsumption || ""}
                           onChange={(e) => handleInputChange("ratedPowerConsumption", e.target.value)}
-                          placeholder="e.g., 350 kW (from nameplate)"
+                          placeholder={`e.g., ${chillerData.systemType === 'dx' ? '18 kW / unit' : chillerData.systemType === 'vrf' ? '9.5 kW / module' : '350 kW (nameplate)'}`}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Nameplate/OEM rated power consumption
+                          Nameplate/OEM rated {chillerData.systemType === 'dx' ? 'DX system' : chillerData.systemType === 'vrf' ? 'VRF system' : 'chiller'} power consumption
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="currentPowerConsumption">Actual Power Consumption (kW)</Label>
+                        <Label htmlFor="currentPowerConsumption">Actual {chillerData.systemType === 'dx' ? 'DX' : chillerData.systemType === 'vrf' ? 'VRF' : 'Power'} Consumption (kW)</Label>
                         <Input
                           id="currentPowerConsumption"
                           value={chillerData.currentPowerConsumption}
                           onChange={(e) => handleInputChange("currentPowerConsumption", e.target.value)}
-                          placeholder="e.g., 425 kW (measured)"
+                          placeholder={`e.g., ${chillerData.systemType === 'dx' ? '22 kW / unit' : chillerData.systemType === 'vrf' ? '11 kW / module' : '425 kW (measured)'}`}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Actual measured power consumption
+                          Actual measured {chillerData.systemType === 'dx' ? 'DX system' : chillerData.systemType === 'vrf' ? 'VRF system' : 'chiller'} power consumption
                         </p>
                       </div>
                     </div>

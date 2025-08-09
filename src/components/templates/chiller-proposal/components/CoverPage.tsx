@@ -18,6 +18,7 @@ export interface CoverPageProps {
     tags: string[];
   }>;
   footerNote: string;
+  systemTypeLabel?: string;
 }
 
 const defaultTechHighlights = [
@@ -52,6 +53,7 @@ export const CoverPage: React.FC<CoverPageProps> = ({
   date,
   techHighlights = defaultTechHighlights,
   footerNote,
+  systemTypeLabel,
 }) => {
   return (
     <>
@@ -187,7 +189,7 @@ export const CoverPage: React.FC<CoverPageProps> = ({
           pageBreakInside: 'avoid',
           breakInside: 'avoid'
         }}>
-          <div style={{ marginBottom: 2 }}>Prepared for: <span style={{ fontWeight: 600 }}>{projectName}</span></div>
+          <div style={{ marginBottom: 2 }}>Prepared for: <span style={{ fontWeight: 600 }}>{projectName}</span>{systemTypeLabel ? <span style={{ marginLeft: 6, fontWeight: 500, color: '#0369a1' }}>({systemTypeLabel})</span> : null}</div>
           <div style={{ marginBottom: 2 }}>Date: {date}</div>
           <div style={{ fontStyle: 'italic', color: '#64748b', fontSize: 13, marginTop: 2 }}>{footerNote}</div>
         </div>

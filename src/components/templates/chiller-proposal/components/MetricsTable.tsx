@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChillerProposalData } from '../types';
 import { calculateMetrics } from '../utils/calculations';
+import { getSystemLabel } from '../utils/derived-calculations';
 
 // Standardized color scheme
 const colors = {
@@ -150,13 +151,15 @@ const generateMetricsFromData = (data: ChillerProposalData): MetricRow[] => {
     }
   };
 
+  const { capital, base, powerLabel } = getSystemLabel(data.systemType);
+  const capacityLabel = `${capital} Capacity`;
   return [
-    { label: 'Chiller Capacity', value: systemCapacity },
+    { label: capacityLabel, value: systemCapacity },
     { label: 'Working Days', value: `${workingDays} days` },
     { label: 'Working Hours', value: `${dailyHours} hours` },
-    { label: 'Initial Power Consumption', value: `${currentPower.toFixed(1)} kW/hr` },
-    { label: 'Actual Power Consumption', value: `${proposedPower.toFixed(1)} kW/hr` },
-    { label: 'Expected Power Reduction', value: `${powerReduction.toFixed(1)}%`, highlight: true },
+    { label: `Initial ${powerLabel} Consumption`, value: `${currentPower.toFixed(1)} kW/hr` },
+    { label: `Actual ${powerLabel} Consumption`, value: `${proposedPower.toFixed(1)} kW/hr` },
+    { label: `Expected ${powerLabel} Reduction`, value: `${powerReduction.toFixed(1)}%`, highlight: true },
     { label: 'Annual Energy Savings', value: `${annualEnergyKWh.toLocaleString()} kWh/year`, highlight: true },
     { label: 'Annual Cost Savings', value: `${formatCurrency(annualCostSavings)}/year`, highlight: true },
     { label: 'Annual Water Consumption', value: `${waterConsumption.toFixed(1)} m³/year` },
