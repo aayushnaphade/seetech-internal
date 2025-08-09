@@ -1139,13 +1139,14 @@ export default function ProposalGeneratorPage() {
                 </div>
               </div>
 
-              {/* Comprehensive Analysis Parameters (Collapsible, Two-Column Layout) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      {/* Advanced Technical Sections: only relevant for detailed chiller thermodynamic (P-H) analysis. Hidden for DX & VRF. */}
+      {chillerData.systemType === 'chiller' && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* Master Toggle (full width) */}
                 <div className="lg:col-span-2 flex items-center justify-between border rounded-md p-4 bg-muted/30">
                   <div className="space-y-0.5">
-                    <h4 className="font-semibold text-sm tracking-tight">Advanced Technical Sections</h4>
-                    <p className="text-xs text-muted-foreground">OEM Specs, Sensor Data, Environmental & System Parameters</p>
+        <h4 className="font-semibold text-sm tracking-tight">Advanced Technical Sections <span className="font-normal text-muted-foreground">(For P‑H Chart Analysis Only)</span></h4>
+        <p className="text-xs text-muted-foreground">OEM Specs, Sensor Data, Environmental & System Parameters – Ignored for DX / VRF systems</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={toggleAll} className="h-7 px-3 text-xs">
@@ -1199,7 +1200,7 @@ export default function ProposalGeneratorPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="oemCapacity">OEM Capacity (kW)</Label>
+                        <Label htmlFor="oemCapacity">OEM Cooling Capacity (kW)</Label>
                         <Input
                           id="oemCapacity"
                           type="number"
@@ -1207,6 +1208,7 @@ export default function ProposalGeneratorPage() {
                           onChange={(e) => handleInputChange("oemCapacity", e.target.value)}
                           placeholder="e.g., 897"
                         />
+                        <p className="text-xs text-muted-foreground">Rated cooling output at standard conditions (not electrical input power)</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1426,6 +1428,7 @@ export default function ProposalGeneratorPage() {
                 </Card>
                 </div>
               </div>
+              )}
             </TabsContent>
 
             <TabsContent value="proposal" className="space-y-6">
