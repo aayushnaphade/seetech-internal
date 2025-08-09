@@ -95,16 +95,11 @@ export default function ProposalGeneratorPage() {
             },
             onRuntimeInitialized: function() {
               console.log('CoolProp WASM module initialized for proposal generator');
-              // Force re-check in child components
               window.dispatchEvent(new Event('coolprop-ready'));
             },
-            print: function(text: string) {
-              console.log('CoolProp stdout:', text);
-            },
-            printErr: function(text: string) {
-              console.error('CoolProp stderr:', text);
-            }
-          };
+            print: function(text: string) { console.log('CoolProp stdout:', text); },
+            printErr: function(text: string) { console.error('CoolProp stderr:', text); }
+          } as any;
 
           const script = document.createElement('script');
           script.src = '/coolprop.js';
@@ -165,8 +160,9 @@ export default function ProposalGeneratorPage() {
     investmentCost: "₹2,04,75,000",
     electricityTariff: "8.5",
     waterTariff: "25.0",
-    maintenanceCostType: "percentage",
-    maintenanceCostPercent: "2.0",
+  maintenanceCostType: "percentage",
+  maintenanceCostPercent: "2.0",
+  enableMaintenance: true,
     chillerFanCFM: "300000", // CFM for chiller fan
     waterConsumption: String((300000 * 4 / 1000 * 8760) / 1000), // Auto-calculated from CFM
     projectLifespan: "15",
@@ -262,7 +258,7 @@ export default function ProposalGeneratorPage() {
     return kLPerYear.toFixed(0);
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: any) => {
     const updatedData = {
       ...chillerData,
       [field]: value
@@ -833,8 +829,20 @@ export default function ProposalGeneratorPage() {
                         </p>
                       </div>
                       <div className="space-y-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Label htmlFor="maintenanceCostType" className="whitespace-nowrap">Maintenance Costs</Label>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className={"font-medium " + (chillerData.enableMaintenance ? 'text-green-600' : 'text-muted-foreground')}>Enabled</span>
+                            <Switch
+                              id="enableMaintenance"
+                              checked={!!chillerData.enableMaintenance}
+                              onCheckedChange={(checked) => handleInputChange('enableMaintenance', checked)}
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground">Toggle OFF to ignore maintenance in ROI / payback</span>
+                        </div>
                         <div className="flex items-center gap-2">
-                          <Label htmlFor="maintenanceCostType">Maintenance Cost Type</Label>
+                          <Label htmlFor="maintenanceCostType" className="text-xs">Cost Type</Label>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -851,53 +859,61 @@ export default function ProposalGeneratorPage() {
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        <Select 
-                          value={chillerData.maintenanceCostType || "percentage"} 
-                          onValueChange={(value) => handleInputChange("maintenanceCostType", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select maintenance cost type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="percentage">
-                              <div className="flex items-center gap-2">
-                                <span>💰</span>
-                                <span>Percentage of Investment</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="static">
-                              <div className="flex items-center gap-2">
-                                <span>📊</span>
-                                <span>Static Annual Amount</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="monthly">
-                              <div className="flex items-center gap-2">
-                                <span>📅</span>
-                                <span>Monthly Amount</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="yearly">
-                              <div className="flex items-center gap-2">
-                                <span>🗓️</span>
-                                <span>Yearly Amount</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="onetime">
-                              <div className="flex items-center gap-2">
-                                <span>⚡</span>
-                                <span>One-time Cost</span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-sm text-muted-foreground">
-                          Choose how you want to specify maintenance costs
-                        </p>
+                        {chillerData.enableMaintenance && (
+                          <>
+                            <Select 
+                              value={chillerData.maintenanceCostType || "percentage"} 
+                              onValueChange={(value) => handleInputChange("maintenanceCostType", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select maintenance cost type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="percentage">
+                                  <div className="flex items-center gap-2">
+                                    <span>💰</span>
+                                    <span>Percentage of Investment</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="static">
+                                  <div className="flex items-center gap-2">
+                                    <span>📊</span>
+                                    <span>Static Annual Amount</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="monthly">
+                                  <div className="flex items-center gap-2">
+                                    <span>📅</span>
+                                    <span>Monthly Amount</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="yearly">
+                                  <div className="flex items-center gap-2">
+                                    <span>🗓️</span>
+                                    <span>Yearly Amount</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="onetime">
+                                  <div className="flex items-center gap-2">
+                                    <span>⚡</span>
+                                    <span>One-time Cost</span>
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-sm text-muted-foreground">
+                              Choose how you want to specify maintenance costs
+                            </p>
+                          </>
+                        )}
+                        {!chillerData.enableMaintenance && (
+                          <p className="text-xs italic text-muted-foreground">Maintenance costs excluded from calculations</p>
+                        )}
                       </div>
                     </div>
 
                     {/* Dynamic maintenance cost input based on selected type */}
+                    {chillerData.enableMaintenance && (
                     <div className="space-y-2">
                       {chillerData.maintenanceCostType === "percentage" && (
                         <>
@@ -986,6 +1002,7 @@ export default function ProposalGeneratorPage() {
                         </>
                       )}
                     </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">

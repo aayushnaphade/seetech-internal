@@ -43,6 +43,7 @@ export interface ChillerProposalData {
   maintenanceCostYearly?: string;  // e.g., "48000" - Yearly maintenance cost
   maintenanceCostOnetime?: string; // e.g., "100000" - One-time maintenance cost
   chillerFanCFM?: string;          // e.g., "300000" - Chiller fan CFM
+  enableMaintenance?: boolean;     // Whether to include maintenance cost calculations
   
   // System Details
   operatingHours: string;          // e.g., "8760 hours/year"
