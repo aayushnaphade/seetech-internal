@@ -64,6 +64,20 @@ export default function ProposalGeneratorPage() {
   const [activeTab, setActiveTab] = useState("inputs");
   const proposalRef = useRef<HTMLDivElement>(null);
   const [isProposalGenerated, setIsProposalGenerated] = useState(false);
+  // Collapsible section state
+  const [showAllAdvanced, setShowAllAdvanced] = useState(false);
+  const [openSections, setOpenSections] = useState<{[k:string]: boolean}>({
+    oem: false,
+    sensor: false,
+    env: false,
+    system: false,
+  });
+  const toggleSection = (key: string) => setOpenSections(s => ({...s, [key]: !s[key]}));
+  const toggleAll = () => {
+    const target = !showAllAdvanced;
+    setShowAllAdvanced(target);
+    setOpenSections({ oem: target, sensor: target, env: target, system: target });
+  };
 
   // Load CoolProp and Plotly libraries
   React.useEffect(() => {
@@ -431,8 +445,11 @@ export default function ProposalGeneratorPage() {
             </TabsList>
 
             <TabsContent value="inputs" className="space-y-4">
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Input Form */}
+              {/* Primary Input Sections in Two Columns */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* LEFT COLUMN: Client + System */}
+                <div className="flex flex-col gap-6">
+                {/* Client Information */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Client Information</CardTitle>
@@ -483,7 +500,7 @@ export default function ProposalGeneratorPage() {
                     </div>
                   </CardContent>
                 </Card>
-
+                {/* System Parameters */}
                 <Card>
                   <CardHeader>
                     <CardTitle>System Parameters</CardTitle>
@@ -762,9 +779,10 @@ export default function ProposalGeneratorPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-2">
+                </div>
+                {/* RIGHT COLUMN: Financial + Contact */}
+                <div className="flex flex-col gap-6">
+                {/* Financial Impact & Tariffs */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Financial Impact & Tariffs</CardTitle>
@@ -1073,10 +1091,8 @@ export default function ProposalGeneratorPage() {
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Compact Contact Information Card */}
-                <div className="grid gap-6">
-                  <Card className="h-fit">
+                {/* Contact Information */}
+                <Card className="h-fit">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg">Contact Information</CardTitle>
                       <CardDescription className="text-sm">
@@ -1123,17 +1139,35 @@ export default function ProposalGeneratorPage() {
                 </div>
               </div>
 
-              {/* Comprehensive Chiller Analysis Parameters - Based on Proven Chiller Analyzer */}
-              <div className="grid gap-6 lg:grid-cols-2">
+              {/* Comprehensive Analysis Parameters (Collapsible, Two-Column Layout) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Master Toggle (full width) */}
+                <div className="lg:col-span-2 flex items-center justify-between border rounded-md p-4 bg-muted/30">
+                  <div className="space-y-0.5">
+                    <h4 className="font-semibold text-sm tracking-tight">Advanced Technical Sections</h4>
+                    <p className="text-xs text-muted-foreground">OEM Specs, Sensor Data, Environmental & System Parameters</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={toggleAll} className="h-7 px-3 text-xs">
+                      {showAllAdvanced ? 'Hide All' : 'Show All'}
+                    </Button>
+                  </div>
+                </div>
+                {/* LEFT COLUMN */}
+                <div className="flex flex-col gap-6">
                 {/* OEM Specifications */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>OEM Specifications</CardTitle>
-                    <CardDescription>
-                      Original Equipment Manufacturer specifications from datasheet
-                    </CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="cursor-pointer select-none" onClick={() => toggleSection('oem')}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>OEM Specifications</CardTitle>
+                        <CardDescription>Original Equipment Manufacturer specifications from datasheet</CardDescription>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{openSections.oem ? 'Hide' : 'Show'}</span>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  {openSections.oem && (
+                  <CardContent className="space-y-4 border-t pt-4 animate-in fade-in">
                     <div className="space-y-2">
                       <Label htmlFor="refrigerant">Refrigerant Type</Label>
                       <select
@@ -1176,128 +1210,21 @@ export default function ProposalGeneratorPage() {
                       </div>
                     </div>
                   </CardContent>
+                  )}
                 </Card>
-
-                {/* Actual Sensor Data */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Actual Sensor Data</CardTitle>
-                    <CardDescription>
-                      Real-time readings from chiller sensors
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="evapPressure">Evap Pressure (kPa)</Label>
-                        <Input
-                          id="evapPressure"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.evapPressure || "307.7"}
-                          onChange={(e) => handleInputChange("evapPressure", e.target.value)}
-                          placeholder="e.g., 307.7"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="condPressure">Cond Pressure (kPa)</Label>
-                        <Input
-                          id="condPressure"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.condPressure || "1244.0"}
-                          onChange={(e) => handleInputChange("condPressure", e.target.value)}
-                          placeholder="e.g., 1244.0"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="suctionTemp">Suction Temp (°C)</Label>
-                        <Input
-                          id="suctionTemp"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.suctionTemp || "15.6"}
-                          onChange={(e) => handleInputChange("suctionTemp", e.target.value)}
-                          placeholder="e.g., 15.6"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="dischargeTemp">Discharge Temp (°C)</Label>
-                        <Input
-                          id="dischargeTemp"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.dischargeTemp || "65.0"}
-                          onChange={(e) => handleInputChange("dischargeTemp", e.target.value)}
-                          placeholder="e.g., 65.0"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="evapLWT">Evap LWT (°C)</Label>
-                        <Input
-                          id="evapLWT"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.evapLWT || "12.0"}
-                          onChange={(e) => handleInputChange("evapLWT", e.target.value)}
-                          placeholder="e.g., 12.0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="evapEWT">Evap EWT (°C)</Label>
-                        <Input
-                          id="evapEWT"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.evapEWT || "7.0"}
-                          onChange={(e) => handleInputChange("evapEWT", e.target.value)}
-                          placeholder="e.g., 7.0"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="superheat">Superheat (K)</Label>
-                        <Input
-                          id="superheat"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.superheat || "8.6"}
-                          onChange={(e) => handleInputChange("superheat", e.target.value)}
-                          placeholder="e.g., 8.6"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="subcooling">Subcooling (K)</Label>
-                        <Input
-                          id="subcooling"
-                          type="number"
-                          step="0.1"
-                          value={chillerData.subcooling || "0.0"}
-                          onChange={(e) => handleInputChange("subcooling", e.target.value)}
-                          placeholder="e.g., 0.0"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
                 {/* Environmental Conditions */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Environmental Conditions</CardTitle>
-                    <CardDescription>
-                      Ambient conditions affecting chiller performance
-                    </CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="cursor-pointer select-none" onClick={() => toggleSection('env')}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Environmental Conditions</CardTitle>
+                        <CardDescription>Ambient conditions affecting performance</CardDescription>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{openSections.env ? 'Hide' : 'Show'}</span>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  {openSections.env && (
+                  <CardContent className="space-y-4 border-t pt-4 animate-in fade-in">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="ambientDBT">Ambient DBT (°C)</Label>
@@ -1327,7 +1254,6 @@ export default function ProposalGeneratorPage() {
                         </p>
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="condApproach">Condenser Approach (K)</Label>
                       <Input
@@ -1340,17 +1266,112 @@ export default function ProposalGeneratorPage() {
                       />
                     </div>
                   </CardContent>
+                  )}
                 </Card>
-
-                {/* System Parameters */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>System Parameters</CardTitle>
-                    <CardDescription>
-                      System efficiency factors and operational parameters
-                    </CardDescription>
+                </div>
+                {/* RIGHT COLUMN */}
+                <div className="flex flex-col gap-6">
+                {/* Actual Sensor Data */}
+                <Card className="overflow-hidden">
+                  <CardHeader className="cursor-pointer select-none" onClick={() => toggleSection('sensor')}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Actual Sensor Data</CardTitle>
+                        <CardDescription>Real-time readings from system sensors</CardDescription>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{openSections.sensor ? 'Hide' : 'Show'}</span>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  {openSections.sensor && (
+                  <CardContent className="space-y-6 border-t pt-4 animate-in fade-in">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="evapPressure">Evap Pressure (kPa)</Label>
+                        <Input
+                          id="evapPressure"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.evapPressure || "307.7"}
+                          onChange={(e) => handleInputChange("evapPressure", e.target.value)}
+                          placeholder="e.g., 307.7"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="condPressure">Cond Pressure (kPa)</Label>
+                        <Input
+                          id="condPressure"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.condPressure || "1244.0"}
+                          onChange={(e) => handleInputChange("condPressure", e.target.value)}
+                          placeholder="e.g., 1244.0"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="suctionTemp">Suction Temp (°C)</Label>
+                        <Input
+                          id="suctionTemp"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.suctionTemp || "15.6"}
+                          onChange={(e) => handleInputChange("suctionTemp", e.target.value)}
+                          placeholder="e.g., 15.6"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="dischargeTemp">Discharge Temp (°C)</Label>
+                        <Input
+                          id="dischargeTemp"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.dischargeTemp || "63.4"}
+                          onChange={(e) => handleInputChange("dischargeTemp", e.target.value)}
+                          placeholder="e.g., 63.4"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="superheat">Superheat (K)</Label>
+                        <Input
+                          id="superheat"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.superheat || "8.6"}
+                          onChange={(e) => handleInputChange("superheat", e.target.value)}
+                          placeholder="e.g., 8.6"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="subcooling">Subcooling (K)</Label>
+                        <Input
+                          id="subcooling"
+                          type="number"
+                          step="0.1"
+                          value={chillerData.subcooling || "0.0"}
+                          onChange={(e) => handleInputChange("subcooling", e.target.value)}
+                          placeholder="e.g., 0.0"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                  )}
+                </Card>
+                {/* System Parameters */}
+                <Card className="overflow-hidden">
+                  <CardHeader className="cursor-pointer select-none" onClick={() => toggleSection('system')}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>System Parameters</CardTitle>
+                        <CardDescription>System efficiency factors and operational parameters</CardDescription>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{openSections.system ? 'Hide' : 'Show'}</span>
+                    </div>
+                  </CardHeader>
+                  {openSections.system && (
+                  <CardContent className="space-y-4 border-t pt-4 animate-in fade-in">
                     <div className="space-y-2">
                       <Label htmlFor="compressorEfficiency">Compressor Efficiency</Label>
                       <Input
@@ -1401,7 +1422,9 @@ export default function ProposalGeneratorPage() {
                       </div>
                     </div>
                   </CardContent>
+                  )}
                 </Card>
+                </div>
               </div>
             </TabsContent>
 
