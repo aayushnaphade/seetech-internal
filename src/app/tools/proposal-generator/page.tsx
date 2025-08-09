@@ -129,6 +129,7 @@ export default function ProposalGeneratorPage() {
   const [chillerData, setChillerData] = useState<ChillerProposalData>({
     ...sampleChillerData,
     // Override with proven chiller analyzer values
+  systemType: 'chiller',
     oemCOP: "2.87",
     oemCapacity: "897",
     refrigerant: "R134a",
@@ -381,8 +382,8 @@ export default function ProposalGeneratorPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-semibold">Chiller Proposal Generator</h1>
-              <Badge variant="outline">v1.0</Badge>
+              <h1 className="text-xl font-semibold">Proposal Generator</h1>
+              <Badge variant="outline">v0.0.25</Badge>
             </div>
           </div>
           <div className="mt-2">
@@ -413,9 +414,9 @@ export default function ProposalGeneratorPage() {
       <main className="p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold tracking-tight mb-2">Chiller System Proposal Generator</h2>
+            <h2 className="text-2xl font-bold tracking-tight mb-2">Adiabatic Cooling System for HVAC</h2>
             <p className="text-muted-foreground">
-              Create professional proposals for chiller optimization and efficiency projects
+              Create professional proposals for chiller and adiabatic cooling optimization projects
             </p>
           </div>
 
@@ -496,6 +497,19 @@ export default function ProposalGeneratorPage() {
                           onChange={(e) => handleInputChange("systemCapacity", e.target.value)}
                           placeholder="e.g., 255 TR"
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="systemType">System Type</Label>
+                        <Select value={chillerData.systemType || 'chiller'} onValueChange={(v) => handleInputChange('systemType', v)}>
+                          <SelectTrigger id="systemType">
+                            <SelectValue placeholder="Select system type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="chiller">Chiller</SelectItem>
+                            <SelectItem value="dx">DX</SelectItem>
+                            <SelectItem value="vrf">VRF</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="proposalNumber">Proposal Number</Label>

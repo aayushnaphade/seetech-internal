@@ -4,6 +4,9 @@ export interface ChillerProposalData {
   proposalNumber: string;
   date: string;
   
+  // System Type (added for multi-system support)
+  systemType?: 'chiller' | 'dx' | 'vrf';
+  
   // Client Information
   clientName: string;
   location: string;

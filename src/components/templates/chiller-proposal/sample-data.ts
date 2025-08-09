@@ -8,6 +8,7 @@ export const sampleChillerData: ChillerProposalData = {
   projectName: "High-Efficiency Chiller Optimization Project",
   proposalNumber: "SEE-CHL-2025-001",
   date: "2025-01-15",
+  systemType: 'chiller',
   
   // Client Information
   clientName: "Metropolitan Office Complex",
