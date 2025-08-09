@@ -17,30 +17,34 @@ export interface ChillerProposalData {
   proposedEfficiency: string;      // e.g., "2.8 kW/TR"
   expectedSaving: string;          // e.g., "15%" 
   
+  // New System Parameters
+  ratedPowerConsumption?: string;  // e.g., "350 kW" - Nameplate/OEM rated power
+  calculationMode?: string;        // "automatic" | "manual" - Calculation method
+  workingDays?: string;            // e.g., "365" - Working days per year
+  workingHoursPerDay?: string;     // e.g., "24" - Operating hours per day
+  
   // Financial Details
   investmentCost: string;          // e.g., "₹1,00,00,000"
   paybackPeriod: string;           // e.g., "2.5 years"
   roi: string;                     // e.g., "35%"
   
-  // Enhanced Financial Calculation Inputs
-  electricityTariff?: string;      // e.g., "8.5" (₹/kWh)
-  waterTariff?: string;            // e.g., "25.0" (₹/kL)
-  waterConsumption?: string;       // e.g., "1200" (kL/year)
-  projectLifespan?: string;        // e.g., "15" (years)
-  
-  // Enhanced Maintenance Cost Options
-  maintenanceCostType?: 'percentage' | 'static' | 'monthly' | 'yearly' | 'onetime';
-  maintenanceCostPercent?: string; // e.g., "2.0" (% of investment) - when type is 'percentage'
-  maintenanceCostStatic?: string;  // e.g., "50000" (₹/year) - when type is 'static'
-  maintenanceCostMonthly?: string; // e.g., "4000" (₹/month) - when type is 'monthly'
-  maintenanceCostYearly?: string;  // e.g., "48000" (₹/year) - when type is 'yearly'
-  maintenanceCostOnetime?: string; // e.g., "100000" (₹) - when type is 'onetime'
+  // New Financial Parameters
+  electricityTariff?: string;      // e.g., "8.5" - ₹/kWh
+  waterTariff?: string;            // e.g., "25.0" - ₹/kL
+  waterConsumption?: string;       // e.g., "1200" - kL/year
+  projectLifespan?: string;        // e.g., "15" - years
+  maintenanceCostType?: string;    // "percentage" | "static" | "monthly" | "yearly" | "onetime"
+  maintenanceCostPercent?: string; // e.g., "2.0" - % of investment
+  maintenanceCostStatic?: string;  // e.g., "50000" - Annual maintenance cost
+  maintenanceCostMonthly?: string; // e.g., "4000" - Monthly maintenance cost
+  maintenanceCostYearly?: string;  // e.g., "48000" - Yearly maintenance cost
+  maintenanceCostOnetime?: string; // e.g., "100000" - One-time maintenance cost
+  chillerFanCFM?: string;          // e.g., "300000" - Chiller fan CFM
   
   // System Details
   operatingHours: string;          // e.g., "8760 hours/year"
   currentPowerConsumption: string; // e.g., "816 kW"
   proposedPowerConsumption: string;// e.g., "714 kW"
-  chillerFanCFM?: string;          // e.g., "300000" (CFM) - used to calculate water consumption
   
   // P-H Chart Parameters
   refrigerant?: string;            // e.g., "R134a"
