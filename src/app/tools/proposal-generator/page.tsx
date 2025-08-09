@@ -162,7 +162,8 @@ export default function ProposalGeneratorPage() {
     waterTariff: "25.0",
   maintenanceCostType: "percentage",
   maintenanceCostPercent: "2.0",
-  enableMaintenance: true,
+  // Default maintenance cost inclusion disabled; user can enable to include O&M in financials
+  enableMaintenance: false,
     chillerFanCFM: "300000", // CFM for chiller fan
     waterConsumption: String((300000 * 4 / 1000 * 8760) / 1000), // Auto-calculated from CFM
     projectLifespan: "15",
@@ -170,7 +171,8 @@ export default function ProposalGeneratorPage() {
     roi: "Auto-calculated",
     // New fields for enhanced system parameters
     ratedPowerConsumption: "350",
-    calculationMode: "automatic",
+  // Default optimization calculation mode set to manual (user inputs expected saving %)
+  calculationMode: "manual",
     workingDays: "365",
     workingHoursPerDay: "24"
   });
@@ -266,7 +268,12 @@ export default function ProposalGeneratorPage() {
     
     // Auto-calculate water consumption when CFM changes
     if (field === 'chillerFanCFM') {
-      updatedData.waterConsumption = calculateWaterConsumption(value);
+      // Only auto-calculate when user has a numeric value; allow blank while editing
+      if (value === '' || value === null) {
+        updatedData.waterConsumption = '';
+      } else {
+        updatedData.waterConsumption = calculateWaterConsumption(value);
+      }
     }
     
     // Auto-calculate operating hours when working days or hours per day changes
@@ -317,8 +324,8 @@ export default function ProposalGeneratorPage() {
     const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
     const operatingHours = parseFloat(data.operatingHours) || 8760;
     const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
-    const electricityRate = parseFloat(data.electricityTariff || "8.5");
-    const waterRate = parseFloat(data.waterTariff || "25.0");
+  const electricityRate = data.electricityTariff === '' || data.electricityTariff == null ? 0 : (parseFloat(data.electricityTariff) || 0);
+  const waterRate = data.waterTariff === '' || data.waterTariff == null ? 0 : (parseFloat(data.waterTariff) || 0);
     const waterConsumption = parseFloat(data.waterConsumption || "1200");
     const projectLifespan = parseFloat(data.projectLifespan || "15");
     
@@ -366,7 +373,10 @@ export default function ProposalGeneratorPage() {
       roi: `${roi.toFixed(1)}%`,
       annualMaintenanceCost,
       netAnnualSavings,
-      annualElectricitySavings
+      annualElectricitySavings,
+      annualWaterCost,
+      waterConsumption,
+      waterRate
     };
   };
 
@@ -594,7 +604,7 @@ export default function ProposalGeneratorPage() {
                                 handleInputChange("calculationMode", checked ? "automatic" : "manual")
                               }
                             />
-                            <span className="text-sm text-gray-600">� Automatic</span>
+                            <span className="text-sm text-gray-600">⚙️ Automatic</span>
                           </div>
                         </div>
                       </div>
@@ -803,7 +813,7 @@ export default function ProposalGeneratorPage() {
                           id="electricityTariff"
                           type="number"
                           step="0.1"
-                          value={chillerData.electricityTariff || "8.5"}
+                          value={chillerData.electricityTariff ?? ''}
                           onChange={(e) => handleInputChange("electricityTariff", e.target.value)}
                           placeholder="e.g., 8.5"
                         />
@@ -820,7 +830,7 @@ export default function ProposalGeneratorPage() {
                           id="waterTariff"
                           type="number"
                           step="0.1"
-                          value={chillerData.waterTariff || "25.0"}
+                          value={chillerData.waterTariff ?? ''}
                           onChange={(e) => handleInputChange("waterTariff", e.target.value)}
                           placeholder="e.g., 25.0"
                         />
@@ -1020,7 +1030,7 @@ export default function ProposalGeneratorPage() {
                         <Input
                           id="chillerFanCFM"
                           type="number"
-                          value={chillerData.chillerFanCFM || "300000"}
+                          value={chillerData.chillerFanCFM ?? ''}
                           onChange={(e) => handleInputChange("chillerFanCFM", e.target.value)}
                           placeholder="e.g., 300000"
                           className="bg-white/50"
@@ -1044,7 +1054,7 @@ export default function ProposalGeneratorPage() {
                         <Input
                           id="waterConsumption"
                           type="number"
-                          value={chillerData.waterConsumption || "1200"}
+                          value={chillerData.waterConsumption ?? ''}
                           onChange={(e) => handleInputChange("waterConsumption", e.target.value)}
                           placeholder="e.g., 1200"
                           className="bg-gray-100"
@@ -1098,6 +1108,26 @@ export default function ProposalGeneratorPage() {
                                 const metrics = calculateFinancialMetrics(chillerData);
                                 return (metrics.netAnnualSavings || 0).toLocaleString('en-IN');
                               })()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-[11px] mt-3">
+                          <div>
+                            <span className="text-blue-700">Elec. Savings:</span>
+                            <div className="font-mono">
+                              ₹{(() => { const m = calculateFinancialMetrics(chillerData); return (m.annualElectricitySavings||0).toLocaleString('en-IN'); })()}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-rose-700">Water Cost:</span>
+                            <div className="font-mono">
+                              ₹{(() => { const m = calculateFinancialMetrics(chillerData); return (m.annualWaterCost||0).toLocaleString('en-IN'); })()}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Water Basis:</span>
+                            <div className="font-mono">
+                              {(() => { const m = calculateFinancialMetrics(chillerData); return `${m.waterConsumption} kL × ₹${m.waterRate}/kL`; })()}
                             </div>
                           </div>
                         </div>
