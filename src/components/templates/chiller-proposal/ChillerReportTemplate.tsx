@@ -5,52 +5,10 @@ import CoverPage from './components/CoverPage';
 import { PHChart, PHChartSummary } from './components/PHChart';
 import ExecutiveSummaryPage from './components/ExecutiveSummaryPage';
 import { ChillerProposalData } from './types';
+import { buildDerivedMetrics, getSystemLabel } from './utils/derived-calculations';
 import { Layers, Droplets, Settings, FlaskConical, Leaf, TreePine, Globe, Award, CheckCircle, Wrench, Clock, Users, UserCheck, HardHat, ClipboardCheck, CalendarCheck, User2, Search, BarChart2, Zap, IndianRupee, Activity, Headphones, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
-
-// Enhanced Plot component with better error handling and loading states
-const Plot: any = dynamic(
-  () => import('react-plotly.js').catch(() => {
-    // Fallback component in case plotly fails to load
-    return {
-      default: ({ data, layout, config }: any) => (
-        <div style={{ 
-          width: layout?.width || 520, 
-          height: layout?.height || 260, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          border: '2px dashed #ccc',
-          borderRadius: '8px',
-          background: '#f9f9f9',
-          color: '#666',
-          fontSize: '14px'
-        }}>
-          Chart loading... (Plotly.js)
-        </div>
-      )
-    };
-  }),
-  { 
-    ssr: false,
-    loading: () => (
-      <div style={{ 
-        width: '520px', 
-        height: '260px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        border: '2px dashed #ccc',
-        borderRadius: '8px',
-        background: '#f9f9f9',
-        color: '#666',
-        fontSize: '14px'
-      }}>
-        Loading chart...
-      </div>
-    )
-  }
-);
+const Plot: any = dynamic(() => import('react-plotly.js'), { ssr: false });
 import { Chrono } from 'react-chrono';
 import { LucideProps } from 'lucide-react';
 
@@ -227,44 +185,26 @@ function SystemDescriptionPage() {
 }
 
 function OperatingParametersAndTechnicalAnalysisPage({ data }: { data: ChillerProposalData }) {
-  // Extract temperature values from data (DBT/WBT or condenser temps)
-  const beforeTemp = parseFloat(data.ambientDBT || data.currentCondenserTemp || data.condTemp || '47.7');
-  const afterTemp = parseFloat(data.ambientWBT || data.optimizedCondenserTemp || data.optimizedCondTemp || '36.0');
-  const tempReduction = beforeTemp - afterTemp;
-  
-  // Extract power values
-  const beforePower = parseFloat(data.currentPowerConsumption || '210.0');
-  const afterPower = parseFloat(data.proposedPowerConsumption || '168.0');
-  const powerReduction = ((beforePower - afterPower) / beforePower * 100);
-  
-  // Calculate COP values (simplified calculation)
-  const systemCapacity = parseFloat(data.systemCapacity?.replace(/[^\d.-]/g, '') || '255') * 3.517; // Convert TR to kW
-  const beforeCOP = systemCapacity / beforePower;
-  const afterCOP = systemCapacity / afterPower;
-  const copImprovement = afterCOP - beforeCOP;
-  
-  // Determine temperature label based on data type
-  const tempLabel = (data.ambientDBT && data.ambientWBT) ? 'Ambient Air Temperature (DBT → WBT)' : 'Condenser Inlet Temperature';
-  
-  // Table data
+  const derived = buildDerivedMetrics(data);
+  const { capital } = getSystemLabel(data.systemType);
   const beforeAfterRows = [
     {
-      label: tempLabel,
-      before: `${beforeTemp.toFixed(1)}°C`,
-      after: `${afterTemp.toFixed(1)}°C`,
-      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-{tempReduction.toFixed(1)}°C</span>,
+      label: derived.tempLabel,
+      before: `${derived.beforeTempC.toFixed(1)}°C`,
+      after: `${derived.afterTempC.toFixed(1)}°C`,
+      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-{derived.tempReductionC.toFixed(1)}°C</span>,
     },
     {
-      label: 'System COP',
-      before: beforeCOP.toFixed(2),
-      after: afterCOP.toFixed(2),
-      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>+{copImprovement.toFixed(2)}</span>,
+      label: `${capital} COP`,
+      before: derived.beforeCOP.toFixed(2),
+      after: derived.afterCOP.toFixed(2),
+      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>+{derived.copImprovement.toFixed(2)}</span>,
     },
     {
-      label: 'Power Consumption',
-      before: `${beforePower.toFixed(1)} kW`,
-      after: `${afterPower.toFixed(1)} kW`,
-      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-{powerReduction.toFixed(1)}%</span>,
+      label: `${capital} Power Consumption`,
+      before: `${derived.currentPowerKW.toFixed(1)} kW`,
+      after: `${derived.proposedPowerKW.toFixed(1)} kW`,
+      change: <span style={{ color: colors.secondaryGreen, fontWeight: 600 }}>-{derived.savingPct.toFixed(1)}%</span>,
     },
   ];
 
@@ -365,11 +305,11 @@ function OperatingParametersAndTechnicalAnalysisPage({ data }: { data: ChillerPr
 
   // Before gauge
   const beforeGauge = (
-    <TemperatureGauge value={beforeTemp} />
+    <TemperatureGauge value={derived.beforeTempC} />
   );
   // After gauge
   const afterGauge = (
-    <TemperatureGauge value={afterTemp} reference={beforeTemp} isAfter />
+    <TemperatureGauge value={derived.afterTempC} reference={derived.beforeTempC} isAfter />
   );
 
   return (
@@ -459,6 +399,7 @@ function OperatingParametersAndTechnicalAnalysisPage({ data }: { data: ChillerPr
 }
 
 function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
+  const { capital, powerLabel } = getSystemLabel(data.systemType);
   // Degradation zone table
   const degradationRows = [
     {
@@ -483,7 +424,7 @@ function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
     <div style={{ ...typography.page, paddingTop: 40, paddingLeft: 32, paddingRight: 32 }}>
       <h3 style={{ ...typography.section, fontSize: 16, marginTop: 0, marginBottom: 8, color: colors.primaryBlue }}>3.1 P-H Chart Visualization</h3>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 12, lineHeight: 1.7 }}>
-        The pressure-enthalpy (P-H) diagram below shows the thermodynamic analysis of your chiller system using R134a refrigerant properties. 
+        The pressure-enthalpy (P-H) diagram below shows the thermodynamic analysis of your {capital.toLowerCase()} system using R134a refrigerant properties. 
         This analysis compares three operational scenarios to quantify the performance improvement potential.
       </div>
       
@@ -517,56 +458,12 @@ function PHChartVisualizationPage({ data }: { data: ChillerProposalData }) {
 }
 
 function EnergySavingsAndFinancialAnalysisPage({ data }: { data: ChillerProposalData }) {
-  // Calculate dynamic values from proposal data
-  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
-  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
-  const operatingHours = parseFloat(data.operatingHours) || 8760;
-  const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
-  const electricityRate = parseFloat(data.electricityTariff || "8.5");
-  const waterRate = parseFloat(data.waterTariff || "25.0");
-  const waterConsumption = parseFloat(data.waterConsumption || "1200");
-  const projectLifespan = parseFloat(data.projectLifespan || "15");
-  
-  // Calculate financial metrics
-  const powerSaving = currentPower - proposedPower;
-  const annualEnergySaving = powerSaving * operatingHours;
-  const annualElectricitySavings = annualEnergySaving * electricityRate;
-  const annualWaterCost = waterConsumption * waterRate;
-  
-  // Calculate maintenance cost
-  let annualMaintenanceCost = 0;
-  const maintenanceType = data.maintenanceCostType || 'percentage';
-  
-  switch (maintenanceType) {
-    case 'percentage':
-      const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
-      annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
-      break;
-    case 'static':
-      annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
-      break;
-    case 'monthly':
-      const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
-      annualMaintenanceCost = monthlyCost * 12;
-      break;
-    case 'yearly':
-      annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
-      break;
-    case 'onetime':
-      const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
-      annualMaintenanceCost = onetimeCost / projectLifespan;
-      break;
-  }
-  
-  const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
-  const paybackYears = netAnnualSavings > 0 ? investmentCost / netAnnualSavings : 0;
-  const efficiencyImprovement = currentPower > 0 ? ((powerSaving / currentPower) * 100) : 0;
-
-  // Power comparison chart data
-  const before_kw = currentPower;
-  const after_kw = proposedPower;
-  const saving_kw = powerSaving;
-  const power_saving_pct = efficiencyImprovement;
+  const derived = buildDerivedMetrics(data);
+  const { capital, powerLabel } = getSystemLabel(data.systemType);
+  const before_kw = derived.currentPowerKW || 0;
+  const after_kw = derived.proposedPowerKW || 0;
+  const saving_kw = derived.powerSavingKW;
+  const power_saving_pct = derived.savingPct;
   const barColors = ['#e74c3c', '#1db56c', '#09425d'];
 
   const powerBarData = [
@@ -636,18 +533,24 @@ function EnergySavingsAndFinancialAnalysisPage({ data }: { data: ChillerProposal
   };
 
   // Cost benefit summary table
+  const fmtINR = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
   const costRows = [
-    { item: 'Project Cost', value: `₹${investmentCost.toLocaleString('en-IN')}`, color: colors.text },
-    { item: 'Annual Electricity Savings', value: `₹${annualElectricitySavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: colors.secondaryGreen },
-    { item: 'Annual Water Cost', value: `₹${annualWaterCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: '#e74c3c' },
-    { item: 'Annual Maintenance Cost', value: `₹${annualMaintenanceCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: '#e74c3c' },
-    { item: 'Net Annual Savings', value: `₹${netAnnualSavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: colors.secondaryGreen },
-    { item: 'Simple Payback Period', value: paybackYears < 1 ? `${(paybackYears * 12).toFixed(1)} months` : `${paybackYears.toFixed(1)} years`, color: colors.text },
+    { item: 'Project Cost', value: fmtINR(derived.investmentCost), color: colors.text },
+    { item: 'Annual Electricity Savings', value: fmtINR(derived.annualElectricitySavings), color: colors.secondaryGreen },
+    { item: 'Annual Water Cost', value: fmtINR(derived.annualWaterCost), color: '#e74c3c' },
+    { item: 'Annual Maintenance Cost', value: fmtINR(derived.annualMaintenanceCost), color: '#e74c3c' },
+    { item: 'Net Annual Savings', value: fmtINR(derived.netAnnualSavings), color: colors.secondaryGreen },
+    { item: 'Simple Payback Period', value: derived.simplePaybackMonths ? `${derived.simplePaybackMonths.toFixed(1)} months` : '—', color: colors.text },
   ];
 
   // Pie/donut chart for financial impact (compact, percent only, with custom legend)
   const pieLabels = ['Elec. Savings', 'Water Costs', 'Maint. Costs', 'Net Savings'];
-  const pieValues = [annualElectricitySavings, annualWaterCost, annualMaintenanceCost, netAnnualSavings];
+  const pieValues = [
+    Math.max(0, derived.annualElectricitySavings),
+    Math.max(0, derived.annualWaterCost),
+    Math.max(0, derived.annualMaintenanceCost),
+    Math.max(0, derived.netAnnualSavings)
+  ];
   const pieColors = ['#2E936E', '#B23A48', '#B23A48', '#1D7AA3'];
   const piePull = [0, 0, 0, 0.1]; // Pull out Net Savings
   const pieData = [
@@ -687,7 +590,7 @@ function EnergySavingsAndFinancialAnalysisPage({ data }: { data: ChillerProposal
         />
               </div>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 24, lineHeight: 1.7 }}>
-        The {efficiencyImprovement.toFixed(1)}% reduction in power consumption translates to annual energy savings of {annualEnergySaving.toLocaleString('en-IN', { maximumFractionDigits: 0 })} kWh, resulting in monetary savings of ₹{annualElectricitySavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({(annualElectricitySavings / 100000).toFixed(2)} L)/year.
+        The {power_saving_pct.toFixed(1)}% reduction in {powerLabel} consumption translates to annual energy savings of {derived.annualEnergySavingKWh.toLocaleString('en-IN')} kWh, resulting in monetary savings of {fmtINR(derived.annualElectricitySavings)}/year.
             </div>
       {/* 4. Financial Analysis */}
       <h2 style={{ ...typography.title, fontSize: 20, display: 'flex', alignItems: 'center', marginBottom: 12, marginTop: 32 }}>
@@ -736,124 +639,23 @@ function EnergySavingsAndFinancialAnalysisPage({ data }: { data: ChillerProposal
   );
 }
 
-function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
-  // Calculate financial metrics from proposal data
-  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
-  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
-  const operatingHours = parseFloat(data.operatingHours) || 8760;
-  const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
-  const electricityRate = parseFloat(data.electricityTariff || "8.5");
-  const waterRate = parseFloat(data.waterTariff || "25.0");
-  const waterConsumption = parseFloat(data.waterConsumption || "1200");
-  const projectLifespan = parseFloat(data.projectLifespan || "15");
-  
-  const powerSaving = currentPower - proposedPower;
-  const annualEnergySaving = powerSaving * operatingHours;
-  const annualElectricitySavings = annualEnergySaving * electricityRate;
-  const annualWaterCost = waterConsumption * waterRate;
-  
-  // Calculate annual maintenance cost based on selected type
-  let annualMaintenanceCost = 0;
-  const maintenanceType = data.maintenanceCostType || 'percentage';
-  
-  switch (maintenanceType) {
-    case 'percentage':
-      const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
-      annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
-      break;
-    case 'static':
-      annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
-      break;
-    case 'monthly':
-      const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
-      annualMaintenanceCost = monthlyCost * 12;
-      break;
-    case 'yearly':
-      annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
-      break;
-    case 'onetime':
-      // For one-time cost, amortize over project lifespan
-      const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
-      annualMaintenanceCost = onetimeCost / projectLifespan;
-      break;
-    default:
-      annualMaintenanceCost = 0;
-  }
-  
-  const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
-  
-  // Calculate discount rate (8%) and inflation rate (4%)
-  const discountRate = 0.08;
-  const inflationRate = 0.04;
-  
-  // Generate life cycle cost data
-  const lccRows = [];
-  let cumulativeDCF = 0;
-  
-  // Year 0 - Initial investment
-  lccRows.push({
-    year: 0,
-    cash: (-investmentCost).toLocaleString('en-IN'),
-    dcf: (-investmentCost).toLocaleString('en-IN'),
-    cdf: (-investmentCost).toLocaleString('en-IN'),
-    cdfColor: '#e74c3c'
-  });
-  cumulativeDCF = -investmentCost;
-  
-  // Years 1-15 - Annual cash flows
-  for (let year = 1; year <= projectLifespan; year++) {
-    // Apply inflation to cash flows
-    const inflatedCashFlow = netAnnualSavings * Math.pow(1 + inflationRate, year - 1);
-    
-    // Calculate discounted cash flow
-    const discountedCashFlow = inflatedCashFlow / Math.pow(1 + discountRate, year);
-    
-    // Update cumulative discounted cash flow
-    cumulativeDCF += discountedCashFlow;
-    
-    // Add to table for key years
-    if ([1, 2, 3, 5, 10, 15].includes(year)) {
-      lccRows.push({
-        year,
-        cash: inflatedCashFlow.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
-        dcf: discountedCashFlow.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
-        cdf: cumulativeDCF.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
-        cdfColor: cumulativeDCF > 0 ? '#1db56c' : '#e74c3c'
-      });
-    }
-  }
-  
-  // Calculate break-even point
-  let breakEvenYear = 0;
-  let runningCashFlow = -investmentCost;
-  
-  for (let month = 1; month <= projectLifespan * 12; month++) {
-    const monthlyInflatedCashFlow = (netAnnualSavings * Math.pow(1 + inflationRate, Math.floor((month - 1) / 12))) / 12;
-    runningCashFlow += monthlyInflatedCashFlow;
-    
-    if (runningCashFlow >= 0 && breakEvenYear === 0) {
-      breakEvenYear = month / 12;
-      break;
-    }
-  }
-  
-  // Generate ROI chart data
-  const roiYears = [];
-  const roiCDF = [];
-  let chartCumulativeDCF = -investmentCost;
-  
-  roiYears.push(0);
-  roiCDF.push(chartCumulativeDCF);
-  
-  for (let year = 1; year <= Math.min(15, projectLifespan); year++) {
-    const inflatedCashFlow = netAnnualSavings * Math.pow(1 + inflationRate, year - 1);
-    const discountedCashFlow = inflatedCashFlow / Math.pow(1 + discountRate, year);
-    chartCumulativeDCF += discountedCashFlow;
-    
-    roiYears.push(year);
-    roiCDF.push(chartCumulativeDCF);
-  }
-  
+function LifeCycleCostAndROIPage() {
+  // Life cycle cost table data
+  const lccRows = [
+    { year: 0, cash: '-1,150,000', dcf: '-1,150,000', cdf: '-1,150,000', cdfColor: '#e74c3c' },
+    { year: 1, cash: '1,926,554', dcf: '1,783,847', cdf: '633,847', cdfColor: '#1db56c' },
+    { year: 2, cash: '2,003,616', dcf: '1,717,778', cdf: '2,351,625', cdfColor: '#1db56c' },
+    { year: 3, cash: '2,083,761', dcf: '1,654,157', cdf: '4,005,781', cdfColor: '#1db56c' },
+    { year: 5, cash: '2,253,796', dcf: '1,533,896', cdf: '7,132,569', cdfColor: '#1db56c' },
+    { year: 10, cash: '2,742,087', dcf: '1,270,117', cdf: '13,990,813', cdfColor: '#1db56c' },
+    { year: 15, cash: '3,336,169', dcf: '1,051,699', cdf: '19,669,670', cdfColor: '#1db56c' },
+  ];
+
+  // ROI line chart data
+  const roiYears = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const roiCDF = [0, 633847, 2351625, 4005781, 5710000, 7132569, 9000000, 12000000, 19669670];
+  const breakEvenYear = 0.64;
+  const breakEvenValue = 0;
   const roiData = [
     {
       x: roiYears,
@@ -865,17 +667,16 @@ function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
     },
     {
       x: [breakEvenYear],
-      y: [0],
+      y: [breakEvenValue],
       mode: 'markers+text',
-      name: `Break-even: ${breakEvenYear.toFixed(1)} Years`,
+      name: 'Break-even: 0.64 Years',
       marker: { color: '#1db56c', size: 16, symbol: 'star' },
-      text: [`Break-even: ${breakEvenYear.toFixed(1)} Years`],
+      text: ['Break-even: 0.64 Years'],
       textposition: 'top right',
       textfont: { size: 13, color: '#1db56c' },
       showlegend: false,
     },
   ];
-  
   const roiLayout = {
     title: {
       text: 'Return on Investment Timeline',
@@ -894,14 +695,13 @@ function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
       title: 'Cumulative Discounted Cash Flow (₹)',
       tickfont: { size: 12 },
       titlefont: { size: 13 },
-      tickformat: '.0s',
       zeroline: true,
       showgrid: true,
       gridcolor: '#eaf3f7',
     },
     height: 260,
     width: 520,
-    margin: { l: 80, r: 30, t: 50, b: 50 },
+    margin: { l: 60, r: 30, t: 50, b: 50 },
     plot_bgcolor: colors.white,
     paper_bgcolor: colors.white,
     font: { family: 'Inter, Arial, sans-serif', size: 13, color: colors.text },
@@ -936,7 +736,7 @@ function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
             </table>
           </div>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 24, lineHeight: 1.7 }}>
-        The Net Present Value (NPV) of this project over {projectLifespan} years is <b style={{ color: colors.primaryBlue }}>₹{Math.abs(cumulativeDCF).toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({(Math.abs(cumulativeDCF) / 10000000).toFixed(2)} Cr)</b>, with a discount rate of 8% and inflation rate of 4%.
+        The Net Present Value (NPV) of this project over 15 years is <b style={{ color: colors.primaryBlue }}>₹1,96,69,669.56 (1.97 Cr)</b>, with a discount rate of 8% and inflation rate of 4%.
       </div>
       {/* 4.3 Return on Investment Analysis */}
       <h3 style={{ ...typography.section, fontSize: 16, marginTop: 32, marginBottom: 8, color: colors.primaryBlue }}>4.3 Return on Investment Analysis</h3>
@@ -954,7 +754,7 @@ function LifeCycleCostAndROIPage({ data }: { data: ChillerProposalData }) {
   );
 }
 
-function EnvironmentalImpactPage({ data }: { data: ChillerProposalData }) {
+function EnvironmentalImpactPage() {
   // Color palette
   const darkGreen = '#2f936f';
   const forestGreen = '#3b7a40';
@@ -962,47 +762,12 @@ function EnvironmentalImpactPage({ data }: { data: ChillerProposalData }) {
   const yellow = '#fac310';
   const sdgColors = ['#fac310', '#bd8b2f', '#3b7a40', '#2f936f'];
 
-  // Calculate environmental impact from proposal data
-  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
-  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
-  const operatingHours = parseFloat(data.operatingHours) || 8760;
-  const waterConsumption = parseFloat(data.waterConsumption || "0");
-  const projectLifespan = parseFloat(data.projectLifespan || "15");
-  
-  // Calculate annual energy savings
-  const powerSaving = currentPower - proposedPower; // kW
-  const annualEnergySaving = powerSaving * operatingHours; // kWh/year
-  
-  // Grid emission factor for India (varies by region, using national average)
-  const gridEmissionFactor = 0.82; // kg CO2e/kWh (CEA 2023 data)
-  
-  // Calculate CO2 reduction
-  const annualCO2Reduction = (annualEnergySaving * gridEmissionFactor) / 1000; // tonnes CO2e/year
-  
-  // Calculate equivalent trees planted (1 tree absorbs ~21.8 kg CO2/year)
-  const treesEquivalent = Math.round(annualCO2Reduction * 1000 / 21.8);
-  
-  // Calculate 15-year impact
-  const lifetimeCO2Reduction = annualCO2Reduction * projectLifespan;
-  
-  // Impact table data (calculated dynamically)
+  // Impact table data
   const impactRows = [
-    { 
-      impact: 'Annual Energy Savings', 
-      value: `${annualEnergySaving.toLocaleString('en-IN', { maximumFractionDigits: 0 })} kWh/year` 
-    },
-    { 
-      impact: 'Grid Emission Factor', 
-      value: `${gridEmissionFactor} kg CO2e/kWh` 
-    },
-    { 
-      impact: 'Annual CO2e Reduction', 
-      value: `${annualCO2Reduction.toFixed(1)} tonnes CO2e/year` 
-    },
-    { 
-      impact: 'Equivalent to Trees Planted', 
-      value: `${treesEquivalent.toLocaleString('en-IN')} trees` 
-    },
+    { impact: 'Annual Energy Savings', value: '322,560 kWh/year' },
+    { impact: 'Grid Emission Factor', value: '0.82 kg CO2e/kWh' },
+    { impact: 'Annual CO2e Reduction', value: '264.5 tonnes CO2e/year' },
+    { impact: 'Equivalent to Trees Planted', value: '4,364 trees' },
   ];
 
   // SDG badges
@@ -1056,14 +821,14 @@ function EnvironmentalImpactPage({ data }: { data: ChillerProposalData }) {
             <span style={{ fontWeight: 700, fontSize: 16, color: forestGreen }}>Direct Environmental Impact</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 10 }}>
-            <div style={{ fontWeight: 700, fontSize: 22, color: darkGreen }}>{annualCO2Reduction.toFixed(1)} <span style={{ fontSize: 13, fontWeight: 500 }}>tonnes<br />CO₂</span></div>
-            <div style={{ fontWeight: 700, fontSize: 22, color: gold }}>{treesEquivalent.toLocaleString('en-IN')} <span style={{ fontSize: 13, fontWeight: 500 }}>trees</span></div>
-            <div style={{ fontWeight: 700, fontSize: 22, color: '#e74c3c' }}>{(annualEnergySaving / 1000).toFixed(1)} <span style={{ fontSize: 13, fontWeight: 500 }}>MWh</span></div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: darkGreen }}>264.5 <span style={{ fontSize: 13, fontWeight: 500 }}>tonnes<br />CO₂</span></div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: gold }}>4,364 <span style={{ fontSize: 13, fontWeight: 500 }}>trees</span></div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: '#e74c3c' }}>322.6 <span style={{ fontSize: 13, fontWeight: 500 }}>MWh</span></div>
           </div>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: colors.text, marginBottom: 8 }}>
-            <li>Reduced peak electricity demand by {powerSaving.toFixed(0)} kW</li>
+            <li>Reduced peak electricity demand</li>
             <li>Decreased strain on power infrastructure</li>
-            <li>Efficient water use: {waterConsumption.toLocaleString('en-IN', { maximumFractionDigits: 0 })} L/year</li>
+            <li>Efficient water use: 4,915 L/year</li>
           </ul>
         </div>
         {/* Strategic Benefits Card */}
@@ -1093,7 +858,7 @@ function EnvironmentalImpactPage({ data }: { data: ChillerProposalData }) {
           </div>
           <div style={{ flex: 1, background: darkGreen, height: 12, borderRadius: 6, margin: '0 12px' }} />
           <div style={{ fontWeight: 700, color: darkGreen, fontSize: 15, paddingRight: 18 }}>
-            {lifetimeCO2Reduction.toFixed(1)} tonnes CO₂ avoided
+            3967.5 tonnes CO₂ avoided
           </div>
         </div>
       </div>
@@ -1372,62 +1137,12 @@ function ImplementationPlanPage() {
   );
 }
 
-function MaintenanceAndConclusionPage({ data }: { data: ChillerProposalData }) {
+function MaintenanceAndConclusionPage() {
   const themeBlue = '#09425d';
   const accentGreen = '#1db56c';
   const accentGold = '#fac310';
   const accentRed = '#e74c3c';
   const accentGray = '#e3e8ee';
-  
-  // Calculate dynamic values from proposal data
-  const currentPower = parseFloat(data.currentPowerConsumption) || 0;
-  const proposedPower = parseFloat(data.proposedPowerConsumption) || 0;
-  const operatingHours = parseFloat(data.operatingHours) || 8760;
-  const electricityRate = parseFloat(data.electricityTariff || "8.5");
-  const waterRate = parseFloat(data.waterTariff || "25.0");
-  const waterConsumption = parseFloat(data.waterConsumption || "1200");
-  const projectLifespan = parseFloat(data.projectLifespan || "15");
-  
-  // Calculate financial metrics
-  const powerSaving = currentPower - proposedPower;
-  const annualEnergySaving = powerSaving * operatingHours;
-  const annualElectricitySavings = annualEnergySaving * electricityRate;
-  const annualWaterCost = waterConsumption * waterRate;
-  
-  // Calculate maintenance cost
-  let annualMaintenanceCost = 0;
-  const maintenanceType = data.maintenanceCostType || 'percentage';
-  const investmentCost = parseFloat(data.investmentCost?.replace(/[^\d.-]/g, '')) || 0;
-  
-  switch (maintenanceType) {
-    case 'percentage':
-      const maintenancePercent = parseFloat(data.maintenanceCostPercent || "2.0");
-      annualMaintenanceCost = (investmentCost * maintenancePercent) / 100;
-      break;
-    case 'static':
-      annualMaintenanceCost = parseFloat(data.maintenanceCostStatic || "0");
-      break;
-    case 'monthly':
-      const monthlyCost = parseFloat(data.maintenanceCostMonthly || "0");
-      annualMaintenanceCost = monthlyCost * 12;
-      break;
-    case 'yearly':
-      annualMaintenanceCost = parseFloat(data.maintenanceCostYearly || "0");
-      break;
-    case 'onetime':
-      const onetimeCost = parseFloat(data.maintenanceCostOnetime || "0");
-      annualMaintenanceCost = onetimeCost / projectLifespan;
-      break;
-  }
-  
-  const netAnnualSavings = annualElectricitySavings - annualWaterCost - annualMaintenanceCost;
-  const paybackYears = netAnnualSavings > 0 ? investmentCost / netAnnualSavings : 0;
-  const efficiencyImprovement = currentPower > 0 ? ((powerSaving / currentPower) * 100) : 0;
-  
-  // Calculate CO2 reduction
-  const gridEmissionFactor = 0.82; // kg CO2e/kWh
-  const annualCO2Reduction = (annualEnergySaving * gridEmissionFactor) / 1000; // tonnes CO2e/year
-  
   const cardStyle = {
     background: '#fff',
     borderRadius: 16,
@@ -1455,10 +1170,10 @@ function MaintenanceAndConclusionPage({ data }: { data: ChillerProposalData }) {
     { icon: Zap, color: themeBlue, text: 'Energy efficiency validation' },
   ];
   const summaryBenefits: { icon: React.ElementType; color: string; text: string }[] = [
-    { icon: Zap, color: accentGreen, text: `Energy savings of ${efficiencyImprovement.toFixed(1)}% on chiller power` },
-    { icon: IndianRupee, color: themeBlue, text: `Annual savings of ${netAnnualSavings.toLocaleString('en-IN', { maximumFractionDigits: 0 })} rupees` },
-    { icon: Activity, color: accentGold, text: `ROI period of ${paybackYears < 1 ? `${(paybackYears * 12).toFixed(0)} months` : `${paybackYears.toFixed(1)} years`}` },
-    { icon: Leaf, color: accentGreen, text: `Carbon footprint reduction of ${annualCO2Reduction.toFixed(1)} tonnes CO₂ annually` },
+    { icon: Zap, color: accentGreen, text: 'Energy savings of 20.0% on chiller power' },
+    { icon: IndianRupee, color: themeBlue, text: 'Annual savings of 2,096,640 rupees' },
+    { icon: Activity, color: accentGold, text: 'ROI period of only 7 months' },
+    { icon: Leaf, color: accentGreen, text: 'Carbon footprint reduction of 264.5 tonnes CO₂ annually' },
     { icon: Clock, color: themeBlue, text: 'Extended equipment lifetime and improved reliability' },
     { icon: Headphones, color: accentGold, text: 'Ongoing technical support and optimization' },
   ];
@@ -1536,7 +1251,7 @@ function MaintenanceAndConclusionPage({ data }: { data: ChillerProposalData }) {
         <span style={{ fontWeight: 700, fontSize: 16, color: themeBlue }}>7.2 Conclusion</span>
       </div>
       <div style={{ fontSize: 15, color: colors.text, marginBottom: 16 }}>
-        SEE-Tech Solutions' adiabatic cooling system offers a proven, cost-effective approach to optimize your chiller's performance and achieve significant energy savings. By implementing our solution, <b>{data.clientName}</b> will benefit from:
+        SEE-Tech Solutions' adiabatic cooling system offers a proven, cost-effective approach to optimize your chiller's performance and achieve significant energy savings. By implementing our solution, <b>Ashirwad Pipes 26'</b> will benefit from:
       </div>
       {/* Benefits Grid */}
       <div style={{ background: '#fafbfc', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(9,66,93,0.06)', padding: '18px 18px', marginBottom: 18 }}>
@@ -1613,15 +1328,15 @@ export default function ChillerReportTemplate({ data }: ChillerReportTemplatePro
       <div className="page-break"></div>
       <PHChartVisualizationPage data={data} />
       <div className="page-break"></div>
-      <EnergySavingsAndFinancialAnalysisPage data={data} />
+  <EnergySavingsAndFinancialAnalysisPage data={data} />
       <div className="page-break"></div>
-      <LifeCycleCostAndROIPage data={data} />
+      <LifeCycleCostAndROIPage />
       <div className="page-break"></div>
-      <EnvironmentalImpactPage data={data} />
+      <EnvironmentalImpactPage />
       <div className="page-break"></div>
       <ImplementationPlanPage />
       <div className="page-break"></div>
-      <MaintenanceAndConclusionPage data={data} />
+      <MaintenanceAndConclusionPage />
       <div className="page-break"></div>
     </div>
   );
